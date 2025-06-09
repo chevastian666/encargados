@@ -1,3 +1,4 @@
+import CONFIG from '../config';
 // ==================== SERVICIO API ====================
 class ApiService {
   constructor() {

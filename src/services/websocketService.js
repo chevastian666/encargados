@@ -1,3 +1,4 @@
+import CONFIG from '../config';
 // ==================== WEBSOCKET SERVICE ====================
 class WebSocketService {
   constructor() {
