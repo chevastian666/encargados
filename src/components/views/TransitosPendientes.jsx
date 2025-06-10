@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link, Loader2, Sun, Eye, Type, AlertTriangle } from 'lucide-react';
+import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link, Loader2, Sun, Eye, Type, AlertTriangle, ChevronDown } from 'lucide-react';
 import { Modal, SidePanel } from '../common';
 import TransitoDetails from '../TransitoDetails';
 import { useApiData } from '../../hooks';
@@ -7,10 +7,13 @@ import { ESTADOS, DEPOSITOS } from '../../constants/constants';
 import apiService from '../../services/api.service';
 import TransitoMiniCard from '../cards/TransitoMiniCard';
 
+// Configuración de items por página
+const ITEMS_POR_PAGINA_ESTADO = 10;
+const ITEMS_POR_PAGINA_MINIATURA = 20;
+
 /**
- * Vista de Tránsitos Pendientes de Precintar - Optimizada para Touch y Accesibilidad
- * Con mejoras visuales para separación por estado y modo alto contraste
- * NUEVO: Priorización visual por hora de salida y alertas de urgencia
+ * Vista de Tránsitos Pendientes de Precintar - Con Carga Progresiva
+ * Ahora con lazy loading para mejor performance con muchos tránsitos
  */
 const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
   const [selectedTransito, setSelectedTransito] = useState(null);
@@ -20,6 +23,14 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     const saved = localStorage.getItem('vistaMiniatura');
     return saved === 'true';
   });
+  
+  // Estados para carga progresiva
+  const [itemsMostradosPorEstado, setItemsMostradosPorEstado] = useState({
+    esperando: ITEMS_POR_PAGINA_ESTADO,
+    pasando_soga: ITEMS_POR_PAGINA_ESTADO,
+    precintando: ITEMS_POR_PAGINA_ESTADO
+  });
+  const [itemsMostradosMiniatura, setItemsMostradosMiniatura] = useState(ITEMS_POR_PAGINA_MINIATURA);
   
   // Estados para accesibilidad
   const [altoContraste, setAltoContraste] = useState(() => {
@@ -31,6 +42,18 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     const saved = localStorage.getItem('tamanoTexto');
     return saved || 'normal';
   });
+
+  // Reiniciar contadores cuando cambia la vista o se abre el modal
+  useEffect(() => {
+    if (isOpen) {
+      setItemsMostradosPorEstado({
+        esperando: ITEMS_POR_PAGINA_ESTADO,
+        pasando_soga: ITEMS_POR_PAGINA_ESTADO,
+        precintando: ITEMS_POR_PAGINA_ESTADO
+      });
+      setItemsMostradosMiniatura(ITEMS_POR_PAGINA_MINIATURA);
+    }
+  }, [isOpen, vistaMiniatura]);
 
   // Guardar preferencias de accesibilidad
   useEffect(() => {
@@ -67,6 +90,19 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     setSelectedTransito(transito);
     setShowSidePanel(true);
     setLoadingTransitoId(null);
+  };
+
+  // Función para mostrar más items en un estado específico
+  const mostrarMasItems = (estado) => {
+    setItemsMostradosPorEstado(prev => ({
+      ...prev,
+      [estado]: prev[estado] + ITEMS_POR_PAGINA_ESTADO
+    }));
+  };
+
+  // Función para mostrar más miniaturas
+  const mostrarMasMiniaturas = () => {
+    setItemsMostradosMiniatura(prev => prev + ITEMS_POR_PAGINA_MINIATURA);
   };
 
   // Configuración de tamaños de texto
@@ -176,6 +212,17 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     return grupos;
   }, [transitosPendientes]);
 
+  // Preparar tránsitos para vista miniatura con ordenamiento
+  const transitosMiniaturaOrdenados = useMemo(() => {
+    return transitosPendientes
+      .map(transito => ({
+        ...transito,
+        minutosHastaSalida: calcularMinutosHastaSalida(transito.salida),
+        nivelUrgencia: getNivelUrgencia(calcularMinutosHastaSalida(transito.salida))
+      }))
+      .sort((a, b) => a.minutosHastaSalida - b.minutosHastaSalida);
+  }, [transitosPendientes]);
+
   // Calcular estadísticas de urgencia
   const estadisticasUrgencia = useMemo(() => {
     const stats = {
@@ -200,6 +247,15 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     return stats;
   }, [transitosPendientes]);
 
+  // Calcular contadores por estado
+  const contadoresPorEstado = useMemo(() => {
+    return {
+      esperando: transitosPorEstado.esperando.length,
+      pasando_soga: transitosPorEstado.pasando_soga.length,
+      precintando: transitosPorEstado.precintando.length
+    };
+  }, [transitosPorEstado]);
+
   // Configuración mejorada de estados con iconos
   const estadosConfig = {
     esperando: {
@@ -207,21 +263,24 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
       gradient: altoContraste ? 'from-white to-gray-200 text-black' : 'from-yellow-500 to-amber-600',
       lightBg: altoContraste ? 'bg-white' : 'bg-yellow-50',
       darkBg: altoContraste ? 'bg-white' : 'bg-yellow-900/20',
-      borderColor: altoContraste ? 'border-l-black' : 'border-l-yellow-500'
+      borderColor: altoContraste ? 'border-l-black' : 'border-l-yellow-500',
+      badgeColor: altoContraste ? 'bg-gray-200 text-black border-black' : darkMode ? 'bg-yellow-900/50 text-yellow-400 border-yellow-600' : 'bg-yellow-100 text-yellow-700 border-yellow-300'
     },
     pasando_soga: {
       icon: Link,
       gradient: altoContraste ? 'from-white to-gray-200 text-black' : 'from-blue-500 to-blue-600',
       lightBg: altoContraste ? 'bg-white' : 'bg-blue-50',
       darkBg: altoContraste ? 'bg-white' : 'bg-blue-900/20',
-      borderColor: altoContraste ? 'border-l-black' : 'border-l-blue-500'
+      borderColor: altoContraste ? 'border-l-black' : 'border-l-blue-500',
+      badgeColor: altoContraste ? 'bg-gray-300 text-black border-black' : darkMode ? 'bg-blue-900/50 text-blue-400 border-blue-600' : 'bg-blue-100 text-blue-700 border-blue-300'
     },
     precintando: {
       icon: AlertCircle,
       gradient: altoContraste ? 'from-black to-gray-800 text-white' : 'from-red-500 to-red-600',
       lightBg: altoContraste ? 'bg-gray-100' : 'bg-red-50',
       darkBg: altoContraste ? 'bg-gray-100' : 'bg-red-900/20',
-      borderColor: altoContraste ? 'border-l-black' : 'border-l-red-500'
+      borderColor: altoContraste ? 'border-l-black' : 'border-l-red-500',
+      badgeColor: altoContraste ? 'bg-black text-white border-black' : darkMode ? 'bg-red-900/50 text-red-400 border-red-600' : 'bg-red-100 text-red-700 border-red-300'
     }
   };
 
@@ -401,6 +460,35 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     );
   };
 
+  // Componente botón "Ver más"
+  const BotonVerMas = ({ onClick, itemsRestantes, isLastButton }) => (
+    <button
+      onClick={onClick}
+      className={`
+        w-full py-4 px-6
+        ${altoContraste 
+          ? 'bg-white border-2 border-black text-black hover:bg-gray-100' 
+          : darkMode 
+            ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+            : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+        }
+        rounded-lg
+        font-medium
+        transition-all duration-200
+        flex items-center justify-center gap-2
+        touch-manipulation
+        select-none
+        active:scale-95
+        shadow-md hover:shadow-lg
+        ${isLastButton ? 'mb-0' : 'mb-4'}
+      `}
+    >
+      <span>Ver {Math.min(itemsRestantes, ITEMS_POR_PAGINA_ESTADO)} más</span>
+      <ChevronDown className="w-5 h-5" />
+      <span className="text-sm opacity-75">({itemsRestantes} restantes)</span>
+    </button>
+  );
+
   return (
     <Modal
       isOpen={isOpen}
@@ -515,39 +603,67 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
               </div>
             </div>
             
-            {/* Contador de tránsitos con indicadores de urgencia */}
-            <div className={`
-              px-5 py-3 rounded-lg 
-              ${altoContraste ? 'bg-black text-white' : darkMode ? 'bg-gray-700' : 'bg-gray-100'} 
-              shadow-md select-none
-            `}>
-              <div className="flex items-center gap-4">
-                <div>
-                  <span className={`text-2xl font-bold ${altoContraste ? 'text-white' : 'text-blue-500'}`}>
-                    {transitosPendientes.length}
-                  </span>
-                  <span className={`ml-2 ${altoContraste ? 'text-white' : darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    activos
-                  </span>
+            {/* Contadores mejorados con desglose por estado */}
+            <div className="flex flex-col sm:flex-row gap-2 items-end">
+              {/* Contador total */}
+              <div className={`
+                px-5 py-3 rounded-lg 
+                ${altoContraste ? 'bg-black text-white' : darkMode ? 'bg-gray-700' : 'bg-gray-100'} 
+                shadow-md select-none
+              `}>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <span className={`text-2xl font-bold ${altoContraste ? 'text-white' : 'text-blue-500'}`}>
+                      {transitosPendientes.length}
+                    </span>
+                    <span className={`ml-2 ${altoContraste ? 'text-white' : darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      activos
+                    </span>
+                  </div>
                 </div>
-                {/* Mini indicadores de urgencia */}
-                <div className="flex gap-2 text-xs">
-                  {estadisticasUrgencia.criticos > 0 && (
-                    <span className="bg-red-500 text-white px-2 py-1 rounded-full font-bold animate-pulse">
-                      {estadisticasUrgencia.criticos} 🚨
-                    </span>
-                  )}
-                  {estadisticasUrgencia.urgentes > 0 && (
-                    <span className="bg-orange-500 text-white px-2 py-1 rounded-full font-bold">
-                      {estadisticasUrgencia.urgentes} ⚠️
-                    </span>
-                  )}
-                  {estadisticasUrgencia.proximos > 0 && (
-                    <span className="bg-yellow-500 text-white px-2 py-1 rounded-full font-bold">
-                      {estadisticasUrgencia.proximos} ⏰
-                    </span>
-                  )}
-                </div>
+              </div>
+              
+              {/* Desglose por estado */}
+              <div className="flex gap-2">
+                {/* Esperando */}
+                {contadoresPorEstado.esperando > 0 && (
+                  <div className={`
+                    px-3 py-2 rounded-lg border-2 flex items-center gap-2
+                    ${estadosConfig.esperando.badgeColor}
+                    select-none shadow-sm
+                  `}>
+                    <Clock className="w-4 h-4" />
+                    <span className="font-semibold">{contadoresPorEstado.esperando}</span>
+                    <span className="text-xs hidden sm:inline">Esperando</span>
+                  </div>
+                )}
+                
+                {/* Pasando Soga */}
+                {contadoresPorEstado.pasando_soga > 0 && (
+                  <div className={`
+                    px-3 py-2 rounded-lg border-2 flex items-center gap-2
+                    ${estadosConfig.pasando_soga.badgeColor}
+                    select-none shadow-sm
+                  `}>
+                    <Link className="w-4 h-4" />
+                    <span className="font-semibold">{contadoresPorEstado.pasando_soga}</span>
+                    <span className="text-xs hidden sm:inline">Pasando</span>
+                  </div>
+                )}
+                
+                {/* Precintando */}
+                {contadoresPorEstado.precintando > 0 && (
+                  <div className={`
+                    px-3 py-2 rounded-lg border-2 flex items-center gap-2
+                    ${estadosConfig.precintando.badgeColor}
+                    select-none shadow-sm
+                    ${!altoContraste && 'animate-pulse'}
+                  `}>
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="font-semibold">{contadoresPorEstado.precintando}</span>
+                    <span className="text-xs hidden sm:inline">Precintando</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -606,28 +722,55 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
               <p className={currentSize.texto}>No hay tránsitos pendientes de precintar</p>
             </div>
           ) : vistaMiniatura ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto overscroll-contain">
-              {transitosPendientes
-                .map(transito => ({
-                  ...transito,
-                  minutosHastaSalida: calcularMinutosHastaSalida(transito.salida),
-                  nivelUrgencia: getNivelUrgencia(calcularMinutosHastaSalida(transito.salida))
-                }))
-                .sort((a, b) => a.minutosHastaSalida - b.minutosHastaSalida)
-                .map((transito) => (
-                  <TransitoMiniCard
-                    key={transito.id}
-                    transito={transito}
-                    darkMode={darkMode}
-                    altoContraste={altoContraste}
-                    tamanoTexto={tamanoTexto}
-                    onClick={() => handleVerDetalles(transito)}
-                    className="touch-manipulation"
-                    isLoading={loadingTransitoId === transito.id}
-                    urgencia={transito.nivelUrgencia}
-                    minutosHastaSalida={transito.minutosHastaSalida}
-                  />
-                ))}
+            <div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto overscroll-contain">
+                {transitosMiniaturaOrdenados
+                  .slice(0, itemsMostradosMiniatura)
+                  .map((transito) => (
+                    <TransitoMiniCard
+                      key={transito.id}
+                      transito={transito}
+                      darkMode={darkMode}
+                      altoContraste={altoContraste}
+                      tamanoTexto={tamanoTexto}
+                      onClick={() => handleVerDetalles(transito)}
+                      className="touch-manipulation"
+                      isLoading={loadingTransitoId === transito.id}
+                      urgencia={transito.nivelUrgencia}
+                      minutosHastaSalida={transito.minutosHastaSalida}
+                    />
+                  ))}
+              </div>
+              
+              {/* Botón "Ver más" para miniaturas */}
+              {itemsMostradosMiniatura < transitosMiniaturaOrdenados.length && (
+                <div className="mt-6">
+                  <button
+                    onClick={mostrarMasMiniaturas}
+                    className={`
+                      w-full py-4 px-6
+                      ${altoContraste 
+                        ? 'bg-white border-2 border-black text-black hover:bg-gray-100' 
+                        : darkMode 
+                          ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                      }
+                      rounded-lg
+                      font-medium
+                      transition-all duration-200
+                      flex items-center justify-center gap-2
+                      touch-manipulation
+                      select-none
+                      active:scale-95
+                      shadow-md hover:shadow-lg
+                    `}
+                  >
+                    <span>Ver {Math.min(transitosMiniaturaOrdenados.length - itemsMostradosMiniatura, ITEMS_POR_PAGINA_MINIATURA)} más</span>
+                    <ChevronDown className="w-5 h-5" />
+                    <span className="text-sm opacity-75">({transitosMiniaturaOrdenados.length - itemsMostradosMiniatura} restantes)</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-8 overflow-y-auto overscroll-contain">
@@ -636,6 +779,9 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                 
                 const config = estadosConfig[estado];
                 const Icon = config.icon;
+                const itemsMostrados = itemsMostradosPorEstado[estado];
+                const transitosMostrados = transitos.slice(0, itemsMostrados);
+                const tienesMas = transitos.length > itemsMostrados;
 
                 return (
                   <div key={estado} className="group">
@@ -716,8 +862,19 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                       ${!altoContraste && `border-x-2 border-b-2 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
                     `}>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {transitos.map(renderTransitoCard)}
+                        {transitosMostrados.map(renderTransitoCard)}
                       </div>
+                      
+                      {/* Botón "Ver más" por estado */}
+                      {tienesMas && (
+                        <div className="mt-6">
+                          <BotonVerMas 
+                            onClick={() => mostrarMasItems(estado)}
+                            itemsRestantes={transitos.length - itemsMostrados}
+                            isLastButton={true}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
