@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link, Loader2, Sun, Eye, Type } from 'lucide-react';
+import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link, Loader2, Sun, Eye, Type, AlertTriangle } from 'lucide-react';
 import { Modal, SidePanel } from '../common';
 import TransitoDetails from '../TransitoDetails';
 import { useApiData } from '../../hooks';
@@ -10,6 +10,7 @@ import TransitoMiniCard from '../cards/TransitoMiniCard';
 /**
  * Vista de Tránsitos Pendientes de Precintar - Optimizada para Touch y Accesibilidad
  * Con mejoras visuales para separación por estado y modo alto contraste
+ * NUEVO: Priorización visual por hora de salida y alertas de urgencia
  */
 const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
   const [selectedTransito, setSelectedTransito] = useState(null);
@@ -121,7 +122,31 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     setTamanoTexto(tamaños[nuevoIndex]);
   };
 
-  // Agrupar por estado
+  // Función para calcular minutos hasta la salida
+  const calcularMinutosHastaSalida = (horaSalida) => {
+    const ahora = new Date();
+    const [horas, minutos] = horaSalida.split(':').map(Number);
+    const salida = new Date();
+    salida.setHours(horas, minutos, 0, 0);
+    
+    // Si la hora de salida ya pasó hoy, asumimos que es para mañana
+    if (salida < ahora) {
+      salida.setDate(salida.getDate() + 1);
+    }
+    
+    const diferencia = salida - ahora;
+    return Math.floor(diferencia / 60000); // Convertir a minutos
+  };
+
+  // Función para determinar el nivel de urgencia
+  const getNivelUrgencia = (minutos) => {
+    if (minutos <= 30) return 'critico';
+    if (minutos <= 60) return 'urgente';
+    if (minutos <= 120) return 'proximo';
+    return 'normal';
+  };
+
+  // Agrupar por estado y ordenar por hora de salida
   const transitosPorEstado = useMemo(() => {
     const grupos = {
       esperando: [],
@@ -129,13 +154,50 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
       precintando: []
     };
     
-    transitosPendientes.forEach(transito => {
+    // Agregar información de urgencia a cada tránsito
+    const transitosConUrgencia = transitosPendientes.map(transito => ({
+      ...transito,
+      minutosHastaSalida: calcularMinutosHastaSalida(transito.salida),
+      nivelUrgencia: getNivelUrgencia(calcularMinutosHastaSalida(transito.salida))
+    }));
+    
+    // Agrupar por estado
+    transitosConUrgencia.forEach(transito => {
       if (grupos[transito.estado]) {
         grupos[transito.estado].push(transito);
       }
     });
     
+    // Ordenar cada grupo por hora de salida (más próxima primero)
+    Object.keys(grupos).forEach(estado => {
+      grupos[estado].sort((a, b) => a.minutosHastaSalida - b.minutosHastaSalida);
+    });
+    
     return grupos;
+  }, [transitosPendientes]);
+
+  // Calcular estadísticas de urgencia
+  const estadisticasUrgencia = useMemo(() => {
+    const stats = {
+      criticos: 0,
+      urgentes: 0,
+      proximos: 0,
+      normales: 0
+    };
+    
+    transitosPendientes.forEach(transito => {
+      const minutos = calcularMinutosHastaSalida(transito.salida);
+      const nivel = getNivelUrgencia(minutos);
+      
+      switch(nivel) {
+        case 'critico': stats.criticos++; break;
+        case 'urgente': stats.urgentes++; break;
+        case 'proximo': stats.proximos++; break;
+        default: stats.normales++;
+      }
+    });
+    
+    return stats;
   }, [transitosPendientes]);
 
   // Configuración mejorada de estados con iconos
@@ -167,6 +229,40 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     const config = estadosConfig[transito.estado];
     const isLoading = loadingTransitoId === transito.id;
     
+    // Configuración de urgencia
+    const urgenciaConfig = {
+      critico: {
+        bg: 'bg-red-500',
+        text: 'text-white',
+        icon: '🚨',
+        pulse: true,
+        label: `¡Sale en ${transito.minutosHastaSalida} min!`
+      },
+      urgente: {
+        bg: 'bg-orange-500',
+        text: 'text-white',
+        icon: '⚠️',
+        pulse: true,
+        label: `Sale en ${transito.minutosHastaSalida} min`
+      },
+      proximo: {
+        bg: 'bg-yellow-500',
+        text: 'text-white',
+        icon: '⏰',
+        pulse: false,
+        label: `Sale en ${Math.floor(transito.minutosHastaSalida / 60)}h ${transito.minutosHastaSalida % 60}min`
+      },
+      normal: {
+        bg: null,
+        text: null,
+        icon: null,
+        pulse: false,
+        label: null
+      }
+    };
+    
+    const urgencia = urgenciaConfig[transito.nivelUrgencia];
+    
     return (
       <div 
         key={transito.id}
@@ -187,8 +283,23 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
           select-none
           transform hover:scale-[1.02]
           ${isLoading ? 'opacity-75' : ''}
+          ${transito.nivelUrgencia === 'critico' ? 'ring-2 ring-red-500 ring-offset-2' : ''}
         `}
       >
+        {/* Badge de urgencia en la parte superior */}
+        {urgencia.label && (
+          <div className={`
+            absolute -top-3 left-1/2 transform -translate-x-1/2
+            ${urgencia.bg} ${urgencia.text}
+            px-3 py-1 rounded-full text-xs font-bold
+            shadow-lg z-10
+            ${urgencia.pulse ? 'animate-pulse' : ''}
+            ${altoContraste ? 'border-2 border-black' : ''}
+          `}>
+            {urgencia.icon} {urgencia.label}
+          </div>
+        )}
+
         {/* Badge flotante mejorado para estado crítico */}
         {transito.estado === 'precintando' && !altoContraste && (
           <>
@@ -202,7 +313,7 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
           </>
         )}
 
-        <div className="flex justify-between mb-4">
+        <div className="flex justify-between mb-4 mt-2">
           <div>
             <h3 className={`${currentSize.titulo} font-bold ${altoContraste ? 'text-black' : darkMode ? 'text-white' : 'text-gray-900'}`}>
               {transito.matricula}
@@ -233,9 +344,18 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
               {transito.tipo === 'contenedor' ? `Contenedor: ${transito.codigo}` : 'Carga con Lona'}
             </span>
           </p>
-          <p className={`${currentSize.texto} font-semibold flex items-center gap-2`}>
-            <Clock className={`${currentSize.icono} flex-shrink-0 ${altoContraste ? 'text-black' : 'text-gray-500'}`} />
-            <span className={`${tamanoTexto === 'extragrande' ? 'text-xl' : 'text-base'}`}>Salida: {transito.salida}</span>
+          <p className={`${currentSize.texto} font-semibold flex items-center gap-2
+            ${transito.nivelUrgencia === 'critico' ? 'text-red-600 animate-pulse' : ''}
+            ${transito.nivelUrgencia === 'urgente' ? 'text-orange-600' : ''}
+          `}>
+            <Clock className={`${currentSize.icono} flex-shrink-0 
+              ${transito.nivelUrgencia === 'critico' ? 'text-red-600' : ''}
+              ${transito.nivelUrgencia === 'urgente' ? 'text-orange-600' : ''}
+              ${altoContraste ? 'text-black' : 'text-gray-500'}
+            `} />
+            <span className={`${tamanoTexto === 'extragrande' ? 'text-xl' : 'text-base'}`}>
+              Salida: {transito.salida}
+            </span>
           </p>
         </div>
 
@@ -246,9 +366,13 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
             w-full mt-5 px-5 ${currentSize.boton}
             ${isLoading 
               ? 'bg-gray-400 cursor-not-allowed' 
-              : altoContraste
-                ? 'bg-black text-white hover:bg-gray-800'
-                : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white'
+              : transito.nivelUrgencia === 'critico' 
+                ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white animate-pulse'
+                : transito.nivelUrgencia === 'urgente'
+                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white'
+                  : altoContraste
+                    ? 'bg-black text-white hover:bg-gray-800'
+                    : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white'
             }
             font-medium
             rounded-lg 
@@ -287,6 +411,38 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
       <div className={`${altoContraste ? 'bg-white text-black' : darkMode ? 'text-white' : 'text-gray-900'} select-none`}>
         {/* Header con controles mejorados */}
         <div className="mb-6 space-y-4">
+          {/* Indicador de urgencia general */}
+          {(estadisticasUrgencia.criticos > 0 || estadisticasUrgencia.urgentes > 0) && (
+            <div className={`
+              p-4 rounded-lg 
+              ${estadisticasUrgencia.criticos > 0 
+                ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500' 
+                : 'bg-orange-100 dark:bg-orange-900/30 border-2 border-orange-500'
+              }
+              ${estadisticasUrgencia.criticos > 0 ? 'animate-pulse' : ''}
+            `}>
+              <div className="flex items-center gap-3">
+                <AlertTriangle className={`
+                  ${currentSize.icono} 
+                  ${estadisticasUrgencia.criticos > 0 ? 'text-red-600' : 'text-orange-600'}
+                `} />
+                <div className="flex-1">
+                  <p className={`${currentSize.texto} font-bold ${estadisticasUrgencia.criticos > 0 ? 'text-red-700' : 'text-orange-700'}`}>
+                    {estadisticasUrgencia.criticos > 0 
+                      ? `¡${estadisticasUrgencia.criticos} tránsito${estadisticasUrgencia.criticos > 1 ? 's' : ''} crítico${estadisticasUrgencia.criticos > 1 ? 's' : ''} por salir!`
+                      : `${estadisticasUrgencia.urgentes} tránsito${estadisticasUrgencia.urgentes > 1 ? 's' : ''} urgente${estadisticasUrgencia.urgentes > 1 ? 's' : ''}`
+                    }
+                  </p>
+                  {estadisticasUrgencia.criticos > 0 && estadisticasUrgencia.urgentes > 0 && (
+                    <p className={`${currentSize.subtitulo} text-orange-600`}>
+                      + {estadisticasUrgencia.urgentes} tránsito{estadisticasUrgencia.urgentes > 1 ? 's' : ''} urgente{estadisticasUrgencia.urgentes > 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Controles de accesibilidad */}
           <div className="flex flex-wrap gap-2 justify-between items-center">
             <div className="flex gap-2">
@@ -359,18 +515,40 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
               </div>
             </div>
             
-            {/* Contador de tránsitos */}
+            {/* Contador de tránsitos con indicadores de urgencia */}
             <div className={`
               px-5 py-3 rounded-lg 
               ${altoContraste ? 'bg-black text-white' : darkMode ? 'bg-gray-700' : 'bg-gray-100'} 
               shadow-md select-none
             `}>
-              <span className={`text-2xl font-bold ${altoContraste ? 'text-white' : 'text-blue-500'}`}>
-                {transitosPendientes.length}
-              </span>
-              <span className={`ml-2 ${altoContraste ? 'text-white' : darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                activos
-              </span>
+              <div className="flex items-center gap-4">
+                <div>
+                  <span className={`text-2xl font-bold ${altoContraste ? 'text-white' : 'text-blue-500'}`}>
+                    {transitosPendientes.length}
+                  </span>
+                  <span className={`ml-2 ${altoContraste ? 'text-white' : darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    activos
+                  </span>
+                </div>
+                {/* Mini indicadores de urgencia */}
+                <div className="flex gap-2 text-xs">
+                  {estadisticasUrgencia.criticos > 0 && (
+                    <span className="bg-red-500 text-white px-2 py-1 rounded-full font-bold animate-pulse">
+                      {estadisticasUrgencia.criticos} 🚨
+                    </span>
+                  )}
+                  {estadisticasUrgencia.urgentes > 0 && (
+                    <span className="bg-orange-500 text-white px-2 py-1 rounded-full font-bold">
+                      {estadisticasUrgencia.urgentes} ⚠️
+                    </span>
+                  )}
+                  {estadisticasUrgencia.proximos > 0 && (
+                    <span className="bg-yellow-500 text-white px-2 py-1 rounded-full font-bold">
+                      {estadisticasUrgencia.proximos} ⏰
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
           
@@ -429,18 +607,27 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
             </div>
           ) : vistaMiniatura ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto overscroll-contain">
-              {transitosPendientes.map((transito) => (
-                <TransitoMiniCard
-                  key={transito.id}
-                  transito={transito}
-                  darkMode={darkMode}
-                  altoContraste={altoContraste}
-                  tamanoTexto={tamanoTexto}
-                  onClick={() => handleVerDetalles(transito)}
-                  className="touch-manipulation"
-                  isLoading={loadingTransitoId === transito.id}
-                />
-              ))}
+              {transitosPendientes
+                .map(transito => ({
+                  ...transito,
+                  minutosHastaSalida: calcularMinutosHastaSalida(transito.salida),
+                  nivelUrgencia: getNivelUrgencia(calcularMinutosHastaSalida(transito.salida))
+                }))
+                .sort((a, b) => a.minutosHastaSalida - b.minutosHastaSalida)
+                .map((transito) => (
+                  <TransitoMiniCard
+                    key={transito.id}
+                    transito={transito}
+                    darkMode={darkMode}
+                    altoContraste={altoContraste}
+                    tamanoTexto={tamanoTexto}
+                    onClick={() => handleVerDetalles(transito)}
+                    className="touch-manipulation"
+                    isLoading={loadingTransitoId === transito.id}
+                    urgencia={transito.nivelUrgencia}
+                    minutosHastaSalida={transito.minutosHastaSalida}
+                  />
+                ))}
             </div>
           ) : (
             <div className="space-y-8 overflow-y-auto overscroll-contain">
