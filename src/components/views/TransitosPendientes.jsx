@@ -7,7 +7,6 @@ import { ESTADOS, DEPOSITOS } from '../../constants/constants';
 import apiService from '../../services/api.service';
 import TransitoMiniCard from '../cards/TransitoMiniCard';
 
-
 /**
  * Vista de Tránsitos Pendientes de Precintar
  * @param {Object} props - Propiedades del componente
@@ -27,15 +26,13 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     turno: ''
   });
   const [vistaMiniatura, setVistaMiniatura] = useState(() => {
-  const saved = localStorage.getItem('vistaMiniatura');
-  return saved === 'true'; // devuelve true o false
-});
+    const saved = localStorage.getItem('vistaMiniatura');
+    return saved === 'true';
+  });
 
-useEffect(() => {
-  localStorage.setItem('vistaMiniatura', vistaMiniatura);
-}, [vistaMiniatura]);
-
-
+  useEffect(() => {
+    localStorage.setItem('vistaMiniatura', vistaMiniatura);
+  }, [vistaMiniatura]);
 
   // Usar el hook de API con polling automático
   const { data: transitosData, loading, error, refetch } = useApiData(
@@ -158,75 +155,74 @@ useEffect(() => {
   ];
 
   const renderTransitoCard = (transito) => (
-  <div 
-    key={transito.id}
-    className={`
-      relative
-      bg-white dark:bg-gray-800
-      rounded-2xl
-      border border-gray-200 dark:border-gray-700
-      hover:border-blue-400 dark:hover:border-blue-500
-      shadow-sm hover:shadow-xl
-      transition-all duration-300
-      overflow-hidden
-      p-4 sm:p-6
-    `}
-  >
-    {/* Indicador lateral de estado */}
-    <div className={`absolute left-0 top-0 bottom-0 w-1 ${ESTADOS[transito.estado].color}`} />
+    <div 
+      key={transito.id}
+      className={`
+        relative
+        bg-white dark:bg-gray-800
+        rounded-2xl
+        border border-gray-200 dark:border-gray-700
+        hover:border-blue-400 dark:hover:border-blue-500
+        shadow-sm hover:shadow-xl
+        transition-all duration-300
+        overflow-hidden
+        p-4 sm:p-6
+      `}
+    >
+      {/* Indicador lateral de estado */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${ESTADOS[transito.estado].color}`} />
 
-    {/* Badge flotante si estado es crítico */}
-    {transito.estado === 'precintando' && (
-      <div className="absolute -top-2 -right-2">
-        <span className="relative flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+      {/* Badge flotante si estado es crítico */}
+      {transito.estado === 'precintando' && (
+        <div className="absolute -top-2 -right-2">
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </span>
+        </div>
+      )}
+
+      <div className="flex justify-between mb-4">
+        <div>
+          <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            {transito.matricula}
+          </h3>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            {transito.secundaria}
+          </p>
+        </div>
+        <span className={`
+          px-3 py-1 rounded-full text-xs font-semibold text-white 
+          ${ESTADOS[transito.estado].color} animate-pulse
+        `}>
+          {ESTADOS[transito.estado].label}
         </span>
       </div>
-    )}
 
-    <div className="flex justify-between mb-4">
-      <div>
-        <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-          {transito.matricula}
-        </h3>
-        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          {transito.secundaria}
+      <div className={`space-y-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+        <p className="text-sm flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          {transito.deposito}
+        </p>
+        <p className="text-sm flex items-center gap-2">
+          <Package className="w-4 h-4" />
+          {transito.tipo === 'contenedor' ? `Contenedor: ${transito.codigo}` : 'Carga con Lona'}
+        </p>
+        <p className="text-sm font-semibold flex items-center gap-2">
+          <Clock className="w-4 h-4" />
+          Salida: {transito.salida}
         </p>
       </div>
-      <span className={`
-        px-3 py-1 rounded-full text-xs font-semibold text-white 
-        ${ESTADOS[transito.estado].color} animate-pulse
-      `}>
-        {ESTADOS[transito.estado].label}
-      </span>
+
+      <button 
+        onClick={() => handleVerDetalles(transito)}
+        className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+      >
+        Ver Detalles
+        <ChevronRight className="w-4 h-4" />
+      </button>
     </div>
-
-    <div className={`space-y-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-      <p className="text-sm flex items-center gap-2">
-        <MapPin className="w-4 h-4" />
-        {transito.deposito}
-      </p>
-      <p className="text-sm flex items-center gap-2">
-        <Package className="w-4 h-4" />
-        {transito.tipo === 'contenedor' ? `Contenedor: ${transito.codigo}` : 'Carga con Lona'}
-      </p>
-      <p className="text-sm font-semibold flex items-center gap-2">
-        <Clock className="w-4 h-4" />
-        Salida: {transito.salida}
-      </p>
-    </div>
-
-    <button 
-      onClick={() => handleVerDetalles(transito)}
-      className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-    >
-      Ver Detalles
-      <ChevronRight className="w-4 h-4" />
-    </button>
-  </div>
-);
-
+  );
 
   return (
     <Modal
@@ -239,27 +235,26 @@ useEffect(() => {
         {/* Header con búsqueda y contador */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-           <div className={`${vistaMiniatura ? 'sticky top-0 z-10' : ''} bg-inherit pb-2`}>
-  <SearchBar
-    value={searchTerm}
-    onChange={setSearchTerm}
-    placeholder="Buscar por matrícula, código o chofer..."
-    darkMode={darkMode}
-  />
-</div>
-
+            <div className={`${vistaMiniatura ? 'sticky top-0 z-10' : ''} bg-inherit pb-2`}>
+              <SearchBar
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Buscar por matrícula, código o chofer..."
+                darkMode={darkMode}
+              />
+            </div>
           </div>
 
           <button
-  onClick={() => setVistaMiniatura(!vistaMiniatura)}
-  className={`
-    px-4 py-2 rounded-lg 
-    ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-black'}
-    transition-colors mb-4
-  `}
->
-  {vistaMiniatura ? "Ver por estado" : "Vista miniatura"}
-</button>
+            onClick={() => setVistaMiniatura(!vistaMiniatura)}
+            className={`
+              px-4 py-2 rounded-lg 
+              ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-black'}
+              transition-colors mb-4
+            `}
+          >
+            {vistaMiniatura ? "Ver por estado" : "Vista miniatura"}
+          </button>
 
           <div className="flex items-center gap-3">
             <button
@@ -322,40 +317,38 @@ useEffect(() => {
             )}
           </div>
         ) : vistaMiniatura ? (
-  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-    {filteredTransitos.map((transito) => (
-  <TransitoMiniCard
-    key={transito.id}
-    transito={transito}
-    darkMode={darkMode}
-    onClick={() => handleVerDetalles(transito)}
-  />
-))}
-
-  </div>
-) : (
-  <div className="space-y-6">
-    {Object.entries(transitosPorEstado).map(([estado, transitos]) => {
-      if (transitos.length === 0) return null;
-
-      return (
-        <div key={estado}>
-          <h3 className={`
-            text-lg font-semibold mb-3 flex items-center gap-2
-            ${darkMode ? 'text-white' : 'text-gray-900'}
-          `}>
-            <span className={`w-3 h-3 rounded-full ${ESTADOS[estado].color}`} />
-            {ESTADOS[estado].label} ({transitos.length})
-          </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {transitos.map(renderTransitoCard)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {filteredTransitos.map((transito) => (
+              <TransitoMiniCard
+                key={transito.id}
+                transito={transito}
+                darkMode={darkMode}
+                onClick={() => handleVerDetalles(transito)}
+              />
+            ))}
           </div>
-        </div>
-      );
-    })}
-  </div>
-)}
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(transitosPorEstado).map(([estado, transitos]) => {
+              if (transitos.length === 0) return null;
 
+              return (
+                <div key={estado}>
+                  <h3 className={`
+                    text-lg font-semibold mb-3 flex items-center gap-2
+                    ${darkMode ? 'text-white' : 'text-gray-900'}
+                  `}>
+                    <span className={`w-3 h-3 rounded-full ${ESTADOS[estado].color}`} />
+                    {ESTADOS[estado].label} ({transitos.length})
+                  </h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {transitos.map(renderTransitoCard)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
       
       {/* Panel lateral con detalles */}
