@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Package, MapPin, Clock, ChevronRight, Filter as FilterIcon } from 'lucide-react';
 import { Modal, SidePanel, SearchBar, FilterPanel } from '../common';
 import TransitoDetails from '../TransitoDetails';
@@ -26,7 +26,15 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     tipo: '',
     turno: ''
   });
-  const [vistaMiniatura, setVistaMiniatura] = useState(false);
+  const [vistaMiniatura, setVistaMiniatura] = useState(() => {
+  const saved = localStorage.getItem('vistaMiniatura');
+  return saved === 'true'; // devuelve true o false
+});
+
+useEffect(() => {
+  localStorage.setItem('vistaMiniatura', vistaMiniatura);
+}, [vistaMiniatura]);
+
 
 
   // Usar el hook de API con polling automático
