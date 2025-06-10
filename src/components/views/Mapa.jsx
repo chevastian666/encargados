@@ -66,12 +66,31 @@ const MapaModal = ({ isOpen, onClose, darkMode }) => {
     }
   };
 
-  const getPositionStyle = (index, total) => {
+  const getTrajectoryColor = (estado) => {
+    switch (estado) {
+      case 'en_ruta':
+        return '#10b981'; // green-500
+      case 'detenido':
+        return '#f59e0b'; // yellow-500
+      case 'llegado':
+        return '#3b82f6'; // blue-500
+      default:
+        return '#6b7280'; // gray-500
+    }
+  };
+
+  const getPositionCoordinates = (index, total) => {
     // Distribuir los camiones en el mapa de forma visual
     const angle = (index / total) * 2 * Math.PI;
     const radius = 35; // Porcentaje del radio
     const x = 50 + radius * Math.cos(angle);
     const y = 50 + radius * Math.sin(angle);
+    
+    return { x, y };
+  };
+
+  const getPositionStyle = (index, total) => {
+    const { x, y } = getPositionCoordinates(index, total);
     
     return {
       top: `${y}%`,
@@ -184,17 +203,65 @@ const MapaModal = ({ isOpen, onClose, darkMode }) => {
                   transparent 70%)`
               }}
             >
-              {/* Centro - Montevideo */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-                <div className={`
-                  px-4 py-2 rounded-lg shadow-lg
-                  ${darkMode ? 'bg-gray-800' : 'bg-white'}
-                `}>
-                  <MapPin className="w-6 h-6 text-blue-500 mx-auto mb-1" />
-                  <span className="text-sm font-bold">Montevideo</span>
-                </div>
-              </div>
-              
+              {/* SVG para las trayectorias */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                <defs>
+                  {/* Gradientes para las líneas */}
+                  <linearGradient id="gradient-green" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity="0.2" />
+                  </linearGradient>
+                  <linearGradient id="gradient-yellow" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity="0" />
+                    <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.2" />
+                  </linearGradient>
+                  <linearGradient id="gradient-blue" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0" />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.2" />
+                  </linearGradient>
+                </defs>
+
+                {/* Trayectorias de cada camión hacia el centro */}
+                {camionesEnRuta.map((camion, idx) => {
+                  const { x, y } = getPositionCoordinates(idx, camionesEnRuta.length);
+                  const centerX = 50;
+                  const centerY = 50;
+                  const color = getTrajectoryColor(camion.estado);
+                  const gradientId = camion.estado === 'detenido' 
+                    ? 'gradient-yellow' 
+                    : camion.estado === 'llegado' 
+                    ? 'gradient-blue' 
+                    : 'gradient-green';
+                  
+                  // Calcular punto de control para curva suave
+                  const controlX = (x + centerX) / 2;
+                  const controlY = y < centerY ? y - 10 : y + 10;
+                  
+                  return (
+                    <g key={camion.id}>
+                      {/* Línea curva de trayectoria */}
+                      <path
+                        d={`M ${x}% ${y}% Q ${controlX}% ${controlY}%, ${centerX}% ${centerY}%`}
+                        stroke={`url(#${gradientId})`}
+                        strokeWidth="2"
+                        fill="none"
+                        strokeDasharray="5,5"
+                        className={camion.estado === 'en_ruta' ? 'animate-pulse' : ''}
+                      />
+                      
+                      {/* Línea sólida más delgada */}
+                      <path
+                        d={`M ${x}% ${y}% Q ${controlX}% ${controlY}%, ${centerX}% ${centerY}%`}
+                        stroke={color}
+                        strokeWidth="1"
+                        fill="none"
+                        opacity="0.2"
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+
               {/* Círculos de distancia */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className={`
@@ -209,6 +276,17 @@ const MapaModal = ({ isOpen, onClose, darkMode }) => {
                   absolute w-96 h-96 rounded-full border-2 border-dashed
                   ${darkMode ? 'border-gray-600' : 'border-gray-400'}
                 `} />
+              </div>
+              
+              {/* Centro - Montevideo */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+                <div className={`
+                  px-4 py-2 rounded-lg shadow-lg
+                  ${darkMode ? 'bg-gray-800' : 'bg-white'}
+                `}>
+                  <MapPin className="w-6 h-6 text-blue-500 mx-auto mb-1" />
+                  <span className="text-sm font-bold">Montevideo</span>
+                </div>
               </div>
               
               {/* Marcadores de camiones */}
