@@ -1,28 +1,40 @@
 // Estados de tránsito
 export const ESTADOS = {
-  esperando: { 
-    label: 'Esperando', 
+  esperando: {
+    label: 'Esperando Enganche',
     color: 'bg-yellow-500',
-    textColor: 'text-yellow-500',
-    icon: 'Clock'
+    borderColor: 'border-l-yellow-500',
+    bgColor: 'bg-gradient-to-r from-yellow-500 to-amber-600',
+    textColor: 'text-yellow-600',
+    bgLight: 'bg-yellow-50',
+    bgDark: 'bg-yellow-900/20',
+    hoverBg: 'hover:bg-yellow-100',
+    darkHoverBg: 'dark:hover:bg-yellow-900/30',
+    icon: 'Clock' // Referencia al icono a usar
   },
-  pasando_soga: { 
-    label: 'Pasando soga', 
+  pasando_soga: {
+    label: 'Pasando Soga',
     color: 'bg-blue-500',
-    textColor: 'text-blue-500',
-    icon: 'Link'
+    borderColor: 'border-l-blue-500',
+    bgColor: 'bg-gradient-to-r from-blue-500 to-blue-600',
+    textColor: 'text-blue-600',
+    bgLight: 'bg-blue-50',
+    bgDark: 'bg-blue-900/20',
+    hoverBg: 'hover:bg-blue-100',
+    darkHoverBg: 'dark:hover:bg-blue-900/30',
+    icon: 'Link' // Referencia al icono a usar
   },
-  precintando: { 
-    label: 'Precintando', 
-    color: 'bg-green-500',
-    textColor: 'text-green-500',
-    icon: 'Lock'
-  },
-  precintado: { 
-    label: 'Precintado', 
-    color: 'bg-gray-500',
-    textColor: 'text-gray-500',
-    icon: 'Check'
+  precintando: {
+    label: 'Precintando',
+    color: 'bg-red-500',
+    borderColor: 'border-l-red-500',
+    bgColor: 'bg-gradient-to-r from-red-500 to-red-600',
+    textColor: 'text-red-600',
+    bgLight: 'bg-red-50',
+    bgDark: 'bg-red-900/20',
+    hoverBg: 'hover:bg-red-100',
+    darkHoverBg: 'dark:hover:bg-red-900/30',
+    icon: 'AlertCircle' // Referencia al icono a usar
   }
 };
 
