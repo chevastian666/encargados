@@ -239,12 +239,15 @@ useEffect(() => {
         {/* Header con búsqueda y contador */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Buscar por matrícula, código o chofer..."
-              darkMode={darkMode}
-            />
+           <div className={`${vistaMiniatura ? 'sticky top-0 z-10' : ''} bg-inherit pb-2`}>
+  <SearchBar
+    value={searchTerm}
+    onChange={setSearchTerm}
+    placeholder="Buscar por matrícula, código o chofer..."
+    darkMode={darkMode}
+  />
+</div>
+
           </div>
 
           <button
