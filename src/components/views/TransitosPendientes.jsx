@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link, Loader2 } from 'lucide-react';
+import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link, Loader2, Sun, Eye, Type } from 'lucide-react';
 import { Modal, SidePanel } from '../common';
 import TransitoDetails from '../TransitoDetails';
 import { useApiData } from '../../hooks';
@@ -8,21 +8,41 @@ import apiService from '../../services/api.service';
 import TransitoMiniCard from '../cards/TransitoMiniCard';
 
 /**
- * Vista de Tránsitos Pendientes de Precintar - Optimizada para Touch
- * Con mejoras visuales para separación por estado
+ * Vista de Tránsitos Pendientes de Precintar - Optimizada para Touch y Accesibilidad
+ * Con mejoras visuales para separación por estado y modo alto contraste
  */
 const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
   const [selectedTransito, setSelectedTransito] = useState(null);
   const [showSidePanel, setShowSidePanel] = useState(false);
-  const [loadingTransitoId, setLoadingTransitoId] = useState(null); // Nuevo estado para controlar loading
+  const [loadingTransitoId, setLoadingTransitoId] = useState(null);
   const [vistaMiniatura, setVistaMiniatura] = useState(() => {
     const saved = localStorage.getItem('vistaMiniatura');
     return saved === 'true';
   });
+  
+  // Estados para accesibilidad
+  const [altoContraste, setAltoContraste] = useState(() => {
+    const saved = localStorage.getItem('altoContraste');
+    return saved === 'true';
+  });
+  
+  const [tamanoTexto, setTamanoTexto] = useState(() => {
+    const saved = localStorage.getItem('tamanoTexto');
+    return saved || 'normal';
+  });
 
+  // Guardar preferencias de accesibilidad
   useEffect(() => {
     localStorage.setItem('vistaMiniatura', vistaMiniatura);
   }, [vistaMiniatura]);
+
+  useEffect(() => {
+    localStorage.setItem('altoContraste', altoContraste);
+  }, [altoContraste]);
+
+  useEffect(() => {
+    localStorage.setItem('tamanoTexto', tamanoTexto);
+  }, [tamanoTexto]);
 
   // Usar el hook de API con polling automático
   const { data: transitosData, loading, error, refetch } = useApiData(
@@ -48,6 +68,59 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     setLoadingTransitoId(null);
   };
 
+  // Configuración de tamaños de texto
+  const textSizes = {
+    pequeno: {
+      titulo: 'text-lg',
+      subtitulo: 'text-xs',
+      texto: 'text-xs',
+      boton: 'text-sm py-2',
+      icono: 'w-4 h-4',
+      badge: 'text-xs px-2 py-1'
+    },
+    normal: {
+      titulo: 'text-xl',
+      subtitulo: 'text-sm',
+      texto: 'text-sm',
+      boton: 'text-base py-3',
+      icono: 'w-5 h-5',
+      badge: 'text-xs px-3 py-1.5'
+    },
+    grande: {
+      titulo: 'text-2xl',
+      subtitulo: 'text-base',
+      texto: 'text-base',
+      boton: 'text-lg py-3',
+      icono: 'w-6 h-6',
+      badge: 'text-sm px-3 py-2'
+    },
+    extragrande: {
+      titulo: 'text-3xl',
+      subtitulo: 'text-lg',
+      texto: 'text-lg',
+      boton: 'text-xl py-4',
+      icono: 'w-7 h-7',
+      badge: 'text-base px-4 py-2'
+    }
+  };
+
+  const currentSize = textSizes[tamanoTexto] || textSizes.normal;
+
+  // Cambiar tamaño de texto
+  const cambiarTamanoTexto = (direccion) => {
+    const tamaños = ['pequeno', 'normal', 'grande', 'extragrande'];
+    const indexActual = tamaños.indexOf(tamanoTexto);
+    let nuevoIndex;
+    
+    if (direccion === 'aumentar') {
+      nuevoIndex = Math.min(indexActual + 1, tamaños.length - 1);
+    } else {
+      nuevoIndex = Math.max(indexActual - 1, 0);
+    }
+    
+    setTamanoTexto(tamaños[nuevoIndex]);
+  };
+
   // Agrupar por estado
   const transitosPorEstado = useMemo(() => {
     const grupos = {
@@ -69,24 +142,24 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
   const estadosConfig = {
     esperando: {
       icon: Clock,
-      gradient: 'from-yellow-500 to-amber-600',
-      lightBg: 'bg-yellow-50',
-      darkBg: 'bg-yellow-900/20',
-      borderColor: 'border-l-yellow-500'
+      gradient: altoContraste ? 'from-white to-gray-200 text-black' : 'from-yellow-500 to-amber-600',
+      lightBg: altoContraste ? 'bg-white' : 'bg-yellow-50',
+      darkBg: altoContraste ? 'bg-white' : 'bg-yellow-900/20',
+      borderColor: altoContraste ? 'border-l-black' : 'border-l-yellow-500'
     },
     pasando_soga: {
       icon: Link,
-      gradient: 'from-blue-500 to-blue-600',
-      lightBg: 'bg-blue-50',
-      darkBg: 'bg-blue-900/20',
-      borderColor: 'border-l-blue-500'
+      gradient: altoContraste ? 'from-white to-gray-200 text-black' : 'from-blue-500 to-blue-600',
+      lightBg: altoContraste ? 'bg-white' : 'bg-blue-50',
+      darkBg: altoContraste ? 'bg-white' : 'bg-blue-900/20',
+      borderColor: altoContraste ? 'border-l-black' : 'border-l-blue-500'
     },
     precintando: {
       icon: AlertCircle,
-      gradient: 'from-red-500 to-red-600',
-      lightBg: 'bg-red-50',
-      darkBg: 'bg-red-900/20',
-      borderColor: 'border-l-red-500'
+      gradient: altoContraste ? 'from-black to-gray-800 text-white' : 'from-red-500 to-red-600',
+      lightBg: altoContraste ? 'bg-gray-100' : 'bg-red-50',
+      darkBg: altoContraste ? 'bg-gray-100' : 'bg-red-900/20',
+      borderColor: altoContraste ? 'border-l-black' : 'border-l-red-500'
     }
   };
 
@@ -99,11 +172,13 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
         key={transito.id}
         className={`
           relative
-          bg-white dark:bg-gray-800
+          ${altoContraste 
+            ? 'bg-white border-4 border-black' 
+            : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700'
+          }
           rounded-xl
-          border-2 border-gray-200 dark:border-gray-700
-          ${config.borderColor} border-l-4
-          hover:border-blue-400 dark:hover:border-blue-500
+          ${config.borderColor} border-l-8
+          ${!altoContraste && 'hover:border-blue-400 dark:hover:border-blue-500'}
           shadow-sm hover:shadow-xl
           transition-all duration-300
           overflow-hidden
@@ -115,7 +190,7 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
         `}
       >
         {/* Badge flotante mejorado para estado crítico */}
-        {transito.estado === 'precintando' && (
+        {transito.estado === 'precintando' && !altoContraste && (
           <>
             <div className="absolute -top-2 -right-2">
               <span className="relative flex h-5 w-5">
@@ -123,58 +198,59 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                 <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500"></span>
               </span>
             </div>
-            {/* Banda superior de urgencia */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-red-600 to-red-500 animate-pulse" />
           </>
         )}
 
         <div className="flex justify-between mb-4">
           <div>
-            <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3 className={`${currentSize.titulo} font-bold ${altoContraste ? 'text-black' : darkMode ? 'text-white' : 'text-gray-900'}`}>
               {transito.matricula}
             </h3>
-            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`${currentSize.subtitulo} ${altoContraste ? 'text-black' : darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               {transito.secundaria}
             </p>
           </div>
           <span className={`
-            px-3 py-1.5 rounded-full text-xs font-semibold text-white 
+            ${currentSize.badge} rounded-full font-semibold text-white 
             bg-gradient-to-r ${config.gradient}
-            ${transito.estado === 'precintando' ? 'animate-pulse' : ''}
+            ${transito.estado === 'precintando' && !altoContraste ? 'animate-pulse' : ''}
             select-none shadow-md
+            ${altoContraste ? 'border-2 border-black' : ''}
           `}>
             {ESTADOS[transito.estado].label}
           </span>
         </div>
 
-        <div className={`space-y-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          <p className="text-sm flex items-center gap-2">
-            <MapPin className="w-5 h-5 flex-shrink-0 text-gray-500" />
+        <div className={`space-y-3 ${altoContraste ? 'text-black' : darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          <p className={`${currentSize.texto} flex items-center gap-2`}>
+            <MapPin className={`${currentSize.icono} flex-shrink-0 ${altoContraste ? 'text-black' : 'text-gray-500'}`} />
             <span className="truncate font-medium">{transito.deposito}</span>
           </p>
-          <p className="text-sm flex items-center gap-2">
-            <Package className="w-5 h-5 flex-shrink-0 text-gray-500" />
+          <p className={`${currentSize.texto} flex items-center gap-2`}>
+            <Package className={`${currentSize.icono} flex-shrink-0 ${altoContraste ? 'text-black' : 'text-gray-500'}`} />
             <span className="truncate">
               {transito.tipo === 'contenedor' ? `Contenedor: ${transito.codigo}` : 'Carga con Lona'}
             </span>
           </p>
-          <p className="text-sm font-semibold flex items-center gap-2">
-            <Clock className="w-5 h-5 flex-shrink-0 text-gray-500" />
-            <span className="text-base">Salida: {transito.salida}</span>
+          <p className={`${currentSize.texto} font-semibold flex items-center gap-2`}>
+            <Clock className={`${currentSize.icono} flex-shrink-0 ${altoContraste ? 'text-black' : 'text-gray-500'}`} />
+            <span className={`${tamanoTexto === 'extragrande' ? 'text-xl' : 'text-base'}`}>Salida: {transito.salida}</span>
           </p>
         </div>
 
-        {/* OPCIÓN 1: Botón con texto "Cargando..." */}
         <button 
           onClick={() => handleVerDetalles(transito)}
           disabled={isLoading}
           className={`
-            w-full mt-5 px-5 py-3 
+            w-full mt-5 px-5 ${currentSize.boton}
             ${isLoading 
               ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800'
+              : altoContraste
+                ? 'bg-black text-white hover:bg-gray-800'
+                : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white'
             }
-            text-white font-medium
+            font-medium
             rounded-lg 
             transition-all duration-200 
             flex items-center justify-center gap-2
@@ -182,51 +258,21 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
             select-none
             ${!isLoading && 'active:scale-95'}
             shadow-md hover:shadow-lg
+            ${altoContraste ? 'border-2 border-black' : ''}
           `}
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className={`${currentSize.icono} animate-spin`} />
               Cargando...
             </>
           ) : (
             <>
               Ver Detalles
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className={currentSize.icono} />
             </>
           )}
         </button>
-
-        {/* OPCIÓN 2 (Alternativa): Botón con spinner a la derecha */}
-        {/* Descomentar esta opción y comentar la anterior si prefieres esta versión */}
-        {/*
-        <button 
-          onClick={() => handleVerDetalles(transito)}
-          disabled={isLoading}
-          className={`
-            w-full mt-5 px-5 py-3 
-            bg-gradient-to-r from-blue-500 to-blue-600
-            hover:from-blue-600 hover:to-blue-700
-            active:from-blue-700 active:to-blue-800
-            ${isLoading ? 'cursor-wait' : ''}
-            text-white font-medium
-            rounded-lg 
-            transition-all duration-200 
-            flex items-center justify-center gap-2
-            touch-manipulation
-            select-none
-            active:scale-95
-            shadow-md hover:shadow-lg
-          `}
-        >
-          Ver Detalles
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <ChevronRight className="w-5 h-5" />
-          )}
-        </button>
-        */}
       </div>
     );
   };
@@ -238,14 +284,107 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
       title="Tránsitos Pendientes de Precintar"
       size="large"
     >
-      <div className={`${darkMode ? 'text-white' : 'text-gray-900'} select-none`}>
-        {/* Header con controles */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
+      <div className={`${altoContraste ? 'bg-white text-black' : darkMode ? 'text-white' : 'text-gray-900'} select-none`}>
+        {/* Header con controles mejorados */}
+        <div className="mb-6 space-y-4">
+          {/* Controles de accesibilidad */}
+          <div className="flex flex-wrap gap-2 justify-between items-center">
+            <div className="flex gap-2">
+              {/* Toggle Alto Contraste */}
+              <button
+                onClick={() => setAltoContraste(!altoContraste)}
+                className={`
+                  px-4 py-2 rounded-lg font-medium flex items-center gap-2
+                  ${altoContraste 
+                    ? 'bg-black text-white border-2 border-black' 
+                    : darkMode 
+                      ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                      : 'bg-gray-200 hover:bg-gray-300 text-black'
+                  }
+                  transition-colors
+                  touch-manipulation
+                  select-none
+                  active:scale-95
+                `}
+                title="Activar/Desactivar modo alto contraste"
+              >
+                {altoContraste ? <Eye className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                {altoContraste ? 'Contraste Normal' : 'Alto Contraste'}
+              </button>
+              
+              {/* Controles de tamaño de texto */}
+              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                <button
+                  onClick={() => cambiarTamanoTexto('disminuir')}
+                  disabled={tamanoTexto === 'pequeno'}
+                  className={`
+                    px-3 py-2 rounded font-bold
+                    ${tamanoTexto === 'pequeno' 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : 'hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95'
+                    }
+                    transition-all
+                    select-none
+                  `}
+                  title="Disminuir tamaño de texto"
+                >
+                  <Type className="w-4 h-4" />
+                  <span className="text-xs">A-</span>
+                </button>
+                
+                <span className="px-2 text-sm font-medium">
+                  {tamanoTexto === 'pequeno' && 'Pequeño'}
+                  {tamanoTexto === 'normal' && 'Normal'}
+                  {tamanoTexto === 'grande' && 'Grande'}
+                  {tamanoTexto === 'extragrande' && 'Extra Grande'}
+                </span>
+                
+                <button
+                  onClick={() => cambiarTamanoTexto('aumentar')}
+                  disabled={tamanoTexto === 'extragrande'}
+                  className={`
+                    px-3 py-2 rounded font-bold
+                    ${tamanoTexto === 'extragrande' 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : 'hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95'
+                    }
+                    transition-all
+                    select-none
+                  `}
+                  title="Aumentar tamaño de texto"
+                >
+                  <Type className="w-5 h-5" />
+                  <span className="text-sm">A+</span>
+                </button>
+              </div>
+            </div>
+            
+            {/* Contador de tránsitos */}
+            <div className={`
+              px-5 py-3 rounded-lg 
+              ${altoContraste ? 'bg-black text-white' : darkMode ? 'bg-gray-700' : 'bg-gray-100'} 
+              shadow-md select-none
+            `}>
+              <span className={`text-2xl font-bold ${altoContraste ? 'text-white' : 'text-blue-500'}`}>
+                {transitosPendientes.length}
+              </span>
+              <span className={`ml-2 ${altoContraste ? 'text-white' : darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                activos
+              </span>
+            </div>
+          </div>
+          
+          {/* Toggle vista miniatura */}
           <button
             onClick={() => setVistaMiniatura(!vistaMiniatura)}
             className={`
               px-5 py-3 rounded-lg font-medium
-              ${darkMode ? 'bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-white' : 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-black'}
+              ${altoContraste 
+                ? 'bg-black text-white border-2 border-black' 
+                : darkMode 
+                  ? 'bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-white' 
+                  : 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-black'
+              }
               transition-colors
               touch-manipulation
               select-none
@@ -254,22 +393,13 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
           >
             {vistaMiniatura ? "Ver por estado" : "Vista miniatura"}
           </button>
-
-          <div className={`
-            px-5 py-3 rounded-lg 
-            ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} 
-            shadow-md select-none
-          `}>
-            <span className="text-2xl font-bold text-blue-500">{transitosPendientes.length}</span>
-            <span className={`ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>activos</span>
-          </div>
         </div>
         
         {/* Contenido principal con scroll optimizado */}
         <div className="touch-manipulation">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${altoContraste ? 'border-black' : 'border-blue-500'}`}></div>
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -278,8 +408,11 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                 onClick={refetch}
                 className={`
                   px-5 py-3 
-                  bg-blue-500 hover:bg-blue-600 active:bg-blue-700
-                  text-white font-medium
+                  ${altoContraste 
+                    ? 'bg-black text-white' 
+                    : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white'
+                  }
+                  font-medium
                   rounded-lg
                   touch-manipulation
                   select-none
@@ -290,9 +423,9 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
               </button>
             </div>
           ) : transitosPendientes.length === 0 ? (
-            <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <div className={`text-center py-12 ${altoContraste ? 'text-black' : darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               <Package className="w-20 h-20 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">No hay tránsitos pendientes de precintar</p>
+              <p className={currentSize.texto}>No hay tránsitos pendientes de precintar</p>
             </div>
           ) : vistaMiniatura ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto overscroll-contain">
@@ -301,6 +434,8 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                   key={transito.id}
                   transito={transito}
                   darkMode={darkMode}
+                  altoContraste={altoContraste}
+                  tamanoTexto={tamanoTexto}
                   onClick={() => handleVerDetalles(transito)}
                   className="touch-manipulation"
                   isLoading={loadingTransitoId === transito.id}
@@ -320,51 +455,78 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                     {/* Barra de estado ancha y coloreada */}
                     <div className={`
                       relative overflow-hidden
-                      bg-gradient-to-r ${config.gradient}
+                      ${altoContraste 
+                        ? estado === 'precintando' 
+                          ? 'bg-black text-white' 
+                          : 'bg-white text-black border-4 border-t-4 border-l-4 border-r-4 border-black'
+                        : `bg-gradient-to-r ${config.gradient}`
+                      }
                       rounded-t-xl
                       p-4
                       shadow-lg
                       transform transition-transform duration-300
-                      group-hover:scale-[1.01]
+                      ${!altoContraste && 'group-hover:scale-[1.01]'}
                     `}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           {/* Icono del estado */}
-                          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                            <Icon className="w-7 h-7 text-white" />
+                          <div className={`
+                            w-12 h-12 rounded-full flex items-center justify-center
+                            ${altoContraste 
+                              ? estado === 'precintando' 
+                                ? 'bg-white/20' 
+                                : 'bg-black text-white' 
+                              : 'bg-white/20 backdrop-blur-sm'
+                            }
+                          `}>
+                            <Icon className={`w-7 h-7 ${altoContraste && estado !== 'precintando' ? 'text-white' : 'text-white'}`} />
                           </div>
                           
                           <div>
-                            <h3 className="text-xl font-bold text-white drop-shadow-md">
+                            <h3 className={`${currentSize.titulo} font-bold ${altoContraste ? (estado === 'precintando' ? 'text-white' : 'text-black') : 'text-white drop-shadow-md'}`}>
                               {ESTADOS[estado].label}
                             </h3>
-                            <p className="text-white/90 text-sm">
+                            <p className={`${currentSize.subtitulo} ${altoContraste ? (estado === 'precintando' ? 'text-white' : 'text-black') : 'text-white/90'}`}>
                               {transitos.length} {transitos.length === 1 ? 'tránsito' : 'tránsitos'} en este estado
                             </p>
                           </div>
                         </div>
                         
                         {/* Badge con contador animado */}
-                        <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                          <span className="text-3xl font-bold text-white drop-shadow-md">
+                        <div className={`
+                          px-4 py-2 rounded-full
+                          ${altoContraste 
+                            ? estado === 'precintando' 
+                              ? 'bg-white text-black' 
+                              : 'bg-black text-white' 
+                            : 'bg-white/20 backdrop-blur-sm'
+                          }
+                        `}>
+                          <span className={`text-3xl font-bold ${altoContraste ? '' : 'text-white drop-shadow-md'}`}>
                             {transitos.length}
                           </span>
                         </div>
                       </div>
                       
-                      {/* Patrón decorativo */}
-                      <div className="absolute -right-16 -bottom-16 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-                      <div className="absolute -left-8 -top-8 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+                      {/* Patrón decorativo (solo si no está en alto contraste) */}
+                      {!altoContraste && (
+                        <>
+                          <div className="absolute -right-16 -bottom-16 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+                          <div className="absolute -left-8 -top-8 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+                        </>
+                      )}
                     </div>
                     
                     {/* Contenedor de tarjetas con fondo sutil */}
                     <div className={`
-                      ${darkMode ? config.darkBg : config.lightBg}
+                      ${altoContraste 
+                        ? 'bg-gray-100 border-4 border-t-0 border-black' 
+                        : darkMode ? config.darkBg : config.lightBg
+                      }
                       rounded-b-xl
                       p-6
                       -mt-1
-                      border-x-2 border-b-2
-                      ${darkMode ? 'border-gray-700' : 'border-gray-200'}
+                      ${!altoContraste && `border-x-2 border-b-2 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
                     `}>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {transitos.map(renderTransitoCard)}
@@ -391,6 +553,8 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
           <TransitoDetails 
             transito={selectedTransito} 
             darkMode={darkMode}
+            altoContraste={altoContraste}
+            tamanoTexto={tamanoTexto}
             onUpdate={() => {
               refetch();
               setShowSidePanel(false);
