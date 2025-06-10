@@ -8,6 +8,86 @@ class ApiService {
     this.pendingRequests = new Map();
   }
 
+  /**
+ * Notifica un problema sin imágenes
+ * @param {string} transitoId - ID del tránsito
+ * @param {string} problema - Descripción del problema
+ * @returns {Promise<Object>} Respuesta del servidor
+ */
+async notificarProblema(transitoId, problema) {
+  try {
+    const response = await fetch(`${CONFIG.API_BASE_URL}/transitos/${transitoId}/problema`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders()
+      },
+      body: JSON.stringify({ 
+        problema,
+        timestamp: new Date().toISOString()
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error en notificarProblema:', error);
+    throw error;
+  }
+}
+
+/**
+ * Notifica un problema con imágenes adjuntas
+ * @param {FormData} formData - FormData con la información del problema e imágenes
+ * @returns {Promise<Object>} Respuesta del servidor
+ */
+async notificarProblemaConImagenes(formData) {
+  try {
+    const response = await fetch(`${CONFIG.API_BASE_URL}/transitos/problema-con-imagenes`, {
+      method: 'POST',
+      headers: {
+        ...this.getAuthHeaders() // No pongas 'Content-Type', lo maneja el navegador
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error en notificarProblemaConImagenes:', error);
+    throw error;
+  }
+}
+
+/**
+ * Verifica si el servidor acepta imágenes
+ * @returns {Promise<boolean>}
+ */
+async checkImageSupport() {
+  try {
+    const response = await fetch(`${CONFIG.API_BASE_URL}/transitos/problema-con-imagenes`, {
+      method: 'OPTIONS',
+      headers: {
+        ...this.getAuthHeaders()
+      }
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.warn('El servidor no soporta envío de imágenes:', error);
+    return false;
+  }
+}
+
+
   // Método genérico para llamadas API con cache
   async fetchWithCache(endpoint, options = {}) {
     const cacheKey = `${endpoint}-${JSON.stringify(options)}`;

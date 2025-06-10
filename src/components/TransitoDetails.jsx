@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, Phone, Truck, Package, User, Building, FileText, AlertCircle, AlertTriangle, X, Camera, Image, Trash2, Maximize2, Upload } from 'lucide-react';
+import { Clock, Phone, Truck, Package, User, Building, FileText, AlertCircle, AlertTriangle, X, Camera, Image, Trash2, Maximize2, Upload, Calendar, CheckCircle } from 'lucide-react';
 import { useConnection, useNotification } from '../hooks';
 import { ESTADOS } from '../constants/constants';
 import apiService from '../services/api.service';
@@ -13,6 +13,39 @@ const PROBLEMAS_COMUNES = [
   { id: 'conductor_ausente', label: 'Conductor ausente', icon: User },
   { id: 'otro', label: 'Otro problema', icon: AlertCircle }
 ];
+
+// Función helper para obtener el ícono del problema
+const getProblemaIcon = (tipoProblema) => {
+  const problema = PROBLEMAS_COMUNES.find(p => 
+    tipoProblema.toLowerCase().includes(p.label.toLowerCase()) || 
+    tipoProblema.toLowerCase().includes(p.id)
+  );
+  return problema ? problema.icon : AlertCircle;
+};
+
+// Función helper para formatear fecha
+const formatearFecha = (fecha) => {
+  const date = new Date(fecha);
+  const ahora = new Date();
+  const diffTime = Math.abs(ahora - date);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) {
+    return `Hoy a las ${date.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (diffDays === 1) {
+    return `Ayer a las ${date.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}`;
+  } else if (diffDays < 7) {
+    return `Hace ${diffDays} días`;
+  } else {
+    return date.toLocaleDateString('es-UY', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+};
 
 /**
  * Función para comprimir imágenes
@@ -91,8 +124,56 @@ const TransitoDetails = ({ transito, darkMode = false, onUpdate }) => {
   const [uploadingProblem, setUploadingProblem] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [compressingImages, setCompressingImages] = useState(false);
+  const [historialProblemas, setHistorialProblemas] = useState([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+
+  // Cargar historial de problemas
+  useEffect(() => {
+    const cargarHistorialProblemas = async () => {
+      setLoadingHistorial(true);
+      try {
+        // Simulando datos del historial - En producción vendría del API
+        // await apiService.getHistorialProblemas(transito.id);
+        const historialSimulado = [
+          {
+            id: 1,
+            fecha: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            tipo: 'Demora',
+            descripcion: 'Retraso de 45 minutos por tráfico en acceso al puerto',
+            reportadoPor: 'Juan Pérez',
+            imagenes: []
+          },
+          {
+            id: 2,
+            fecha: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            tipo: 'Documentación faltante',
+            descripcion: 'Faltaba el remito de la carga',
+            reportadoPor: 'María García',
+            imagenes: ['https://via.placeholder.com/150']
+          },
+          {
+            id: 3,
+            fecha: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+            tipo: 'Carga incorrecta',
+            descripcion: 'El contenedor no coincidía con el número de precinto indicado en la documentación',
+            reportadoPor: 'Carlos López',
+            imagenes: ['https://via.placeholder.com/150', 'https://via.placeholder.com/150']
+          }
+        ];
+        
+        setHistorialProblemas(historialSimulado);
+      } catch (error) {
+        console.error('Error al cargar historial:', error);
+        // No mostrar error al usuario, simplemente no mostrar historial
+      } finally {
+        setLoadingHistorial(false);
+      }
+    };
+
+    cargarHistorialProblemas();
+  }, [transito.id]);
 
   // Verificar si el tránsito está retrasado
   useEffect(() => {
@@ -258,17 +339,6 @@ const TransitoDetails = ({ transito, darkMode = false, onUpdate }) => {
       : `${selectedProblem.label}${problemDetails ? ': ' + problemDetails : ''}`;
 
     try {
-      // Crear FormData para enviar texto e imágenes
-      const formData = new FormData();
-      formData.append('transitoId', transito.id);
-      formData.append('problema', problemText);
-      formData.append('timestamp', new Date().toISOString());
-      
-      // Agregar imágenes al FormData
-      problemImages.forEach((image, index) => {
-        formData.append(`imagen_${index}`, image.file);
-      });
-
       if (!isOnline) {
         // Para operaciones offline, convertir imágenes a base64
         const imagesData = await Promise.all(
@@ -288,13 +358,73 @@ const TransitoDetails = ({ transito, darkMode = false, onUpdate }) => {
             images: imagesData
           },
           execute: async () => {
-            await apiService.notificarProblemaConImagenes(formData);
+            // Intentar con el método que soporte imágenes si existe
+            if (problemImages.length > 0 && apiService.notificarProblemaConImagenes) {
+              const formData = new FormData();
+              formData.append('transitoId', transito.id);
+              formData.append('problema', problemText);
+              formData.append('timestamp', new Date().toISOString());
+              
+              problemImages.forEach((image, index) => {
+                formData.append(`imagen_${index}`, image.file);
+              });
+              
+              await apiService.notificarProblemaConImagenes(formData);
+            } else {
+              // Fallback al método original sin imágenes
+              await apiService.notificarProblema(transito.id, problemText);
+            }
           }
         });
         
+        // Agregar al historial local inmediatamente
+        const nuevoProblema = {
+          id: Date.now(),
+          fecha: new Date().toISOString(),
+          tipo: selectedProblem.label,
+          descripcion: problemDetails || problemText,
+          reportadoPor: 'Usuario actual',
+          imagenes: problemImages.map(img => img.preview)
+        };
+        setHistorialProblemas(prev => [nuevoProblema, ...prev]);
+        
         addNotification('warning', 'Problema registrado localmente. Se notificará cuando vuelva la conexión.');
       } else {
-        await apiService.notificarProblemaConImagenes(formData);
+        // Si hay imágenes y el método existe, usar el nuevo método
+        if (problemImages.length > 0 && typeof apiService.notificarProblemaConImagenes === 'function') {
+          const formData = new FormData();
+          formData.append('transitoId', transito.id);
+          formData.append('problema', problemText);
+          formData.append('timestamp', new Date().toISOString());
+          
+          // Agregar imágenes al FormData
+          problemImages.forEach((image, index) => {
+            formData.append(`imagen_${index}`, image.file);
+          });
+
+          await apiService.notificarProblemaConImagenes(formData);
+        } else {
+          // Si no hay imágenes o el método no existe, usar el método original
+          await apiService.notificarProblema(transito.id, problemText);
+          
+          // Si había imágenes pero no se pudieron enviar, notificar al usuario
+          if (problemImages.length > 0 && typeof apiService.notificarProblemaConImagenes !== 'function') {
+            console.warn('El método para enviar imágenes no está disponible en el servicio API');
+            addNotification('warning', 'Problema notificado sin las imágenes. El servicio de imágenes no está disponible.');
+          }
+        }
+        
+        // Agregar al historial local
+        const nuevoProblema = {
+          id: Date.now(),
+          fecha: new Date().toISOString(),
+          tipo: selectedProblem.label,
+          descripcion: problemDetails || problemText,
+          reportadoPor: 'Usuario actual',
+          imagenes: problemImages.map(img => img.preview)
+        };
+        setHistorialProblemas(prev => [nuevoProblema, ...prev]);
+        
         addNotification('success', 'Problema notificado correctamente');
       }
       
@@ -305,8 +435,27 @@ const TransitoDetails = ({ transito, darkMode = false, onUpdate }) => {
       setProblemImages([]);
       onUpdate?.();
     } catch (error) {
-      addNotification('error', 'Error al notificar el problema');
-      console.error(error);
+      // Mensaje de error más descriptivo
+      const errorMessage = error.message || 'Error desconocido';
+      addNotification('error', `Error al notificar el problema: ${errorMessage}`);
+      console.error('Error detallado:', error);
+      
+      // Si el error es por el método que no existe, intentar sin imágenes
+      if (error.message && error.message.includes('notificarProblemaConImagenes') && problemImages.length === 0) {
+        try {
+          await apiService.notificarProblema(transito.id, problemText);
+          addNotification('success', 'Problema notificado correctamente (sin imágenes)');
+          
+          // Limpiar y cerrar modal
+          setShowProblemModal(false);
+          setSelectedProblem(null);
+          setProblemDetails('');
+          setProblemImages([]);
+          onUpdate?.();
+        } catch (fallbackError) {
+          console.error('Error en fallback:', fallbackError);
+        }
+      }
     } finally {
       setUploadingProblem(false);
     }
@@ -325,6 +474,94 @@ const TransitoDetails = ({ transito, darkMode = false, onUpdate }) => {
       </div>
     </div>
   );
+
+  // Componente para el timeline de problemas
+  const ProblemaTimeline = ({ problema, isFirst, isLast }) => {
+    const Icon = getProblemaIcon(problema.tipo);
+    const [showImages, setShowImages] = useState(false);
+    
+    return (
+      <div className="flex gap-4">
+        {/* Línea vertical */}
+        <div className="flex flex-col items-center">
+          <div className={`
+            w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+            ${darkMode ? 'bg-yellow-900/30 border-2 border-yellow-600' : 'bg-yellow-100 border-2 border-yellow-500'}
+          `}>
+            <Icon className="w-5 h-5 text-yellow-600" />
+          </div>
+          {!isLast && (
+            <div className={`w-0.5 flex-1 ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`} />
+          )}
+        </div>
+
+        {/* Contenido del problema */}
+        <div className={`flex-1 pb-6 ${isLast ? 'pb-0' : ''}`}>
+          <div className={`
+            p-4 rounded-lg
+            ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}
+          `}>
+            {/* Header */}
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <h5 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {problema.tipo}
+                </h5>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {formatearFecha(problema.fecha)}
+                </p>
+              </div>
+              <span className={`
+                text-xs px-2 py-1 rounded-full
+                ${darkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'}
+              `}>
+                {problema.reportadoPor}
+              </span>
+            </div>
+
+            {/* Descripción */}
+            <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              {problema.descripcion}
+            </p>
+
+            {/* Imágenes */}
+            {problema.imagenes && problema.imagenes.length > 0 && (
+              <div className="mt-3">
+                <button
+                  onClick={() => setShowImages(!showImages)}
+                  className={`
+                    text-sm font-medium flex items-center gap-2
+                    ${darkMode ? 'text-yellow-400 hover:text-yellow-300' : 'text-yellow-600 hover:text-yellow-700'}
+                  `}
+                >
+                  <Image className="w-4 h-4" />
+                  {showImages ? 'Ocultar' : 'Ver'} {problema.imagenes.length} {problema.imagenes.length === 1 ? 'imagen' : 'imágenes'}
+                </button>
+                
+                {showImages && (
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {problema.imagenes.map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img}
+                        alt={`Evidencia ${idx + 1}`}
+                        onClick={() => setPreviewImage({ preview: img, name: `Evidencia ${idx + 1}` })}
+                        className={`
+                          w-full h-20 object-cover rounded cursor-pointer
+                          ${darkMode ? 'border border-gray-600' : 'border border-gray-300'}
+                          hover:opacity-90 transition-opacity
+                        `}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -464,6 +701,46 @@ const TransitoDetails = ({ transito, darkMode = false, onUpdate }) => {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Historial de problemas reportados */}
+        {(historialProblemas.length > 0 || loadingHistorial) && (
+          <div className={`
+            p-4 rounded-lg border
+            ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}
+          `}>
+            <div className="flex items-center gap-3 mb-4">
+              <Calendar className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Historial de Problemas Reportados
+              </h4>
+            </div>
+
+            {loadingHistorial ? (
+              <div className="flex items-center justify-center py-8">
+                <svg className="animate-spin h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            ) : historialProblemas.length > 0 ? (
+              <div className="space-y-0">
+                {historialProblemas.map((problema, index) => (
+                  <ProblemaTimeline
+                    key={problema.id}
+                    problema={problema}
+                    isFirst={index === 0}
+                    isLast={index === historialProblemas.length - 1}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className={`text-center py-6 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No hay problemas reportados para este tránsito</p>
+              </div>
+            )}
           </div>
         )}
 
