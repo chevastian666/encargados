@@ -146,55 +146,75 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
   ];
 
   const renderTransitoCard = (transito) => (
-    <div 
-      key={transito.id} 
-      className={`
-        p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl 
-        transition-all duration-300 transform hover:-translate-y-1
-        ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}
-      `}
-    >
-      <div className="flex justify-between mb-4">
-        <div>
-          <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            {transito.matricula}
-          </h3>
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            {transito.secundaria}
-          </p>
-        </div>
-        <span className={`
-          px-3 py-1 rounded-full text-xs font-semibold text-white 
-          ${ESTADOS[transito.estado].color} animate-pulse
-        `}>
-          {ESTADOS[transito.estado].label}
+  <div 
+    key={transito.id}
+    className={`
+      relative
+      bg-white dark:bg-gray-800
+      rounded-2xl
+      border border-gray-200 dark:border-gray-700
+      hover:border-blue-400 dark:hover:border-blue-500
+      shadow-sm hover:shadow-xl
+      transition-all duration-300
+      overflow-hidden
+      p-4 sm:p-6
+    `}
+  >
+    {/* Indicador lateral de estado */}
+    <div className={`absolute left-0 top-0 bottom-0 w-1 ${ESTADOS[transito.estado].color}`} />
+
+    {/* Badge flotante si estado es crítico */}
+    {transito.estado === 'precintando' && (
+      <div className="absolute -top-2 -right-2">
+        <span className="relative flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
         </span>
       </div>
-      
-      <div className={`space-y-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-        <p className="text-sm flex items-center gap-2">
-          <MapPin className="w-4 h-4" />
-          {transito.deposito}
-        </p>
-        <p className="text-sm flex items-center gap-2">
-          <Package className="w-4 h-4" />
-          {transito.tipo === 'contenedor' ? `Contenedor: ${transito.codigo}` : 'Carga con Lona'}
-        </p>
-        <p className="text-sm font-semibold flex items-center gap-2">
-          <Clock className="w-4 h-4" />
-          Salida: {transito.salida}
+    )}
+
+    <div className="flex justify-between mb-4">
+      <div>
+        <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          {transito.matricula}
+        </h3>
+        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          {transito.secundaria}
         </p>
       </div>
-      
-      <button 
-        onClick={() => handleVerDetalles(transito)}
-        className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-      >
-        Ver Detalles
-        <ChevronRight className="w-4 h-4" />
-      </button>
+      <span className={`
+        px-3 py-1 rounded-full text-xs font-semibold text-white 
+        ${ESTADOS[transito.estado].color} animate-pulse
+      `}>
+        {ESTADOS[transito.estado].label}
+      </span>
     </div>
-  );
+
+    <div className={`space-y-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      <p className="text-sm flex items-center gap-2">
+        <MapPin className="w-4 h-4" />
+        {transito.deposito}
+      </p>
+      <p className="text-sm flex items-center gap-2">
+        <Package className="w-4 h-4" />
+        {transito.tipo === 'contenedor' ? `Contenedor: ${transito.codigo}` : 'Carga con Lona'}
+      </p>
+      <p className="text-sm font-semibold flex items-center gap-2">
+        <Clock className="w-4 h-4" />
+        Salida: {transito.salida}
+      </p>
+    </div>
+
+    <button 
+      onClick={() => handleVerDetalles(transito)}
+      className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+    >
+      Ver Detalles
+      <ChevronRight className="w-4 h-4" />
+    </button>
+  </div>
+);
+
 
   return (
     <Modal

@@ -131,67 +131,74 @@ const DashboardView = ({ onModuleClick }) => {
       <main className="p-4 sm:p-6">
         {/* Módulos Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-7xl mx-auto">
-          {modules.map((module) => {
-            const Icon = module.icon;
-            return (
-              <button
-                key={module.id}
-                onClick={() => onModuleClick(module.id)}
-                className={`
-                  relative
-                  ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'}
-                  p-6 sm:p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300
-                  ${module.importante ? 'border-2 border-yellow-500 animate-pulse-border' : 'border-2 border-transparent'} 
-                  hover:border-blue-500 transform hover:-translate-y-1
-                  text-left w-full
-                `}
-              >
-                {/* Notificación Badge */}
-                {module.notification > 0 && (
-                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-bounce">
-                    {module.notification}
-                  </div>
-                )}
-                
-                {/* Icono */}
-                <div className={`${module.color} p-4 rounded-xl inline-block mb-4 transform transition-transform group-hover:scale-110`}>
-                  <Icon className="w-8 sm:w-12 h-8 sm:h-12 text-white" />
-                </div>
-                
-                {/* Título */}
-                <h3 className={`text-lg sm:text-xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {module.title}
-                </h3>
-                
-                {/* Subtítulo o descripción */}
-                <p className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {module.subtitle || module.description}
-                </p>
-                
-                {/* Contador */}
-                {module.count !== undefined && (
-                  <p className={`text-2xl sm:text-3xl font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    {module.count}
-                  </p>
-                )}
-                
-                {/* Alerta de stock */}
-                {module.alert && (
-                  <span className="absolute top-4 right-4 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                    Stock bajo
-                  </span>
-                )}
-                
-                {/* Indicador de importancia */}
-                {module.id === 'desprecintar' && (
-                  <div className="absolute top-4 right-4">
-                    <ArrowDown className="w-5 h-5 text-yellow-500 animate-bounce" />
-                  </div>
-                )}
-              </button>
-            );
-          })}
+  {modules.map((module) => {
+    const Icon = module.icon;
+    return (
+      <button
+        key={module.id}
+        onClick={() => onModuleClick(module.id)}
+        className={`
+          relative overflow-hidden
+          bg-gradient-to-br from-blue-500/10 to-purple-500/10
+          backdrop-blur-sm
+          border border-white/20
+          hover:border-white/40
+          group
+          p-6 sm:p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300
+          text-left w-full
+        `}
+      >
+        {/* Efecto de brillo animado */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                        -translate-x-full group-hover:translate-x-full transition-transform duration-700 z-0" />
+
+        {/* Notificación Badge */}
+        {module.notification > 0 && (
+          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-bounce z-10">
+            {module.notification}
+          </div>
+        )}
+
+        {/* Icono */}
+        <div className={`${module.color} p-4 rounded-xl inline-block mb-4 z-10 relative`}>
+          <Icon className="w-8 sm:w-12 h-8 sm:h-12 text-white" />
         </div>
+
+        {/* Título */}
+        <h3 className={`text-lg sm:text-xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'} z-10 relative`}>
+          {module.title}
+        </h3>
+
+        {/* Subtítulo o descripción */}
+        <p className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'} z-10 relative`}>
+          {module.subtitle || module.description}
+        </p>
+
+        {/* Contador */}
+        {module.count !== undefined && (
+          <p className={`text-2xl sm:text-3xl font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'} z-10 relative`}>
+            {module.count}
+          </p>
+        )}
+
+        {/* Alerta de stock */}
+        {module.alert && (
+          <span className="absolute top-4 right-4 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse z-10">
+            Stock bajo
+          </span>
+        )}
+
+        {/* Indicador de importancia */}
+        {module.id === 'desprecintar' && (
+          <div className="absolute top-4 right-4 z-10">
+            <ArrowDown className="w-5 h-5 text-yellow-500 animate-bounce" />
+          </div>
+        )}
+      </button>
+    );
+  })}
+</div>
+
 
         {/* Resumen del día */}
         <div className={`mt-8 max-w-7xl mx-auto p-6 rounded-xl ${
