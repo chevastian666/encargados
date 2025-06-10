@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Package, MapPin, Clock, ChevronRight, Filter as FilterIcon } from 'lucide-react';
-import { Modal, SidePanel, SearchBar, FilterPanel } from '../common';
+import { Package, MapPin, Clock, ChevronRight } from 'lucide-react';
+import { Modal, SidePanel } from '../common';
 import TransitoDetails from '../TransitoDetails';
 import { useApiData } from '../../hooks';
 import { ESTADOS, DEPOSITOS } from '../../constants/constants';
@@ -17,14 +17,6 @@ import TransitoMiniCard from '../cards/TransitoMiniCard';
 const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
   const [selectedTransito, setSelectedTransito] = useState(null);
   const [showSidePanel, setShowSidePanel] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(true);
-  const [filters, setFilters] = useState({
-    deposito: '',
-    estado: '',
-    tipo: '',
-    turno: ''
-  });
   const [vistaMiniatura, setVistaMiniatura] = useState(() => {
     const saved = localStorage.getItem('vistaMiniatura');
     return saved === 'true';
@@ -52,49 +44,6 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     setShowSidePanel(true);
   };
 
-  const handleFilterChange = (name, value) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      deposito: '',
-      estado: '',
-      tipo: '',
-      turno: ''
-    });
-    setSearchTerm('');
-  };
-
-  // Filtrado de tránsitos
-  const filteredTransitos = useMemo(() => {
-    return transitosPendientes.filter(transito => {
-      // Búsqueda por texto
-      const searchLower = searchTerm.toLowerCase();
-      const matchSearch = 
-        transito.matricula.toLowerCase().includes(searchLower) ||
-        transito.secundaria.toLowerCase().includes(searchLower) ||
-        transito.chofer.toLowerCase().includes(searchLower) ||
-        (transito.codigo && transito.codigo.toLowerCase().includes(searchLower));
-      
-      if (!matchSearch) return false;
-
-      // Filtros específicos
-      if (filters.deposito && transito.deposito !== filters.deposito) return false;
-      if (filters.estado && transito.estado !== filters.estado) return false;
-      if (filters.tipo && transito.tipo !== filters.tipo) return false;
-      
-      // Filtro por turno (mañana: antes de 12:00, tarde: después de 12:00)
-      if (filters.turno) {
-        const hora = parseInt(transito.salida.split(':')[0]);
-        if (filters.turno === 'manana' && hora >= 12) return false;
-        if (filters.turno === 'tarde' && hora < 12) return false;
-      }
-      
-      return true;
-    });
-  }, [transitosPendientes, searchTerm, filters]);
-
   // Agrupar por estado
   const transitosPorEstado = useMemo(() => {
     const grupos = {
@@ -103,56 +52,14 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
       precintando: []
     };
     
-    filteredTransitos.forEach(transito => {
+    transitosPendientes.forEach(transito => {
       if (grupos[transito.estado]) {
         grupos[transito.estado].push(transito);
       }
     });
     
     return grupos;
-  }, [filteredTransitos]);
-
-  const filterConfig = [
-    {
-      name: 'deposito',
-      label: 'Depósito',
-      type: 'select',
-      value: filters.deposito,
-      options: DEPOSITOS.map(d => ({ value: d.nombre, label: d.nombre }))
-    },
-    {
-      name: 'estado',
-      label: 'Estado',
-      type: 'select',
-      value: filters.estado,
-      options: Object.entries(ESTADOS)
-        .filter(([key]) => key !== 'precintado')
-        .map(([key, value]) => ({ 
-          value: key, 
-          label: value.label 
-        }))
-    },
-    {
-      name: 'tipo',
-      label: 'Tipo de carga',
-      type: 'select',
-      value: filters.tipo,
-      options: [
-        { value: 'contenedor', label: 'Contenedor' },
-        { value: 'lona', label: 'Lona' }
-      ]
-    },
-    {
-      name: 'turno',
-      label: 'Turno',
-      type: 'select',
-      value: filters.turno,
-      options: [
-        { value: 'manana', label: 'Mañana (00:00 - 11:59)' },
-        { value: 'tarde', label: 'Tarde (12:00 - 23:59)' }
-      ]
-    }
-  ];
+  }, [transitosPendientes]);
 
   const renderTransitoCard = (transito) => (
     <div 
@@ -232,61 +139,24 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
       size="large"
     >
       <div className={`${darkMode ? 'text-white' : 'text-gray-900'}`}>
-        {/* Header con búsqueda y contador */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className={`${vistaMiniatura ? 'sticky top-0 z-10' : ''} bg-inherit pb-2`}>
-              <SearchBar
-                value={searchTerm}
-                onChange={setSearchTerm}
-                placeholder="Buscar por matrícula, código o chofer..."
-                darkMode={darkMode}
-              />
-            </div>
-          </div>
-
+        {/* Header con controles */}
+        <div className="mb-6 flex justify-between items-center">
           <button
             onClick={() => setVistaMiniatura(!vistaMiniatura)}
             className={`
               px-4 py-2 rounded-lg 
               ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-black'}
-              transition-colors mb-4
+              transition-colors
             `}
           >
             {vistaMiniatura ? "Ver por estado" : "Vista miniatura"}
           </button>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`
-                px-4 py-2 rounded-lg flex items-center gap-2
-                ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}
-                transition-colors
-              `}
-            >
-              <FilterIcon className="w-4 h-4" />
-              Filtros
-            </button>
-            
-            <div className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} shadow`}>
-              <span className="text-2xl font-bold text-blue-500">{filteredTransitos.length}</span>
-              <span className={`ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>activos</span>
-            </div>
+          <div className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} shadow`}>
+            <span className="text-2xl font-bold text-blue-500">{transitosPendientes.length}</span>
+            <span className={`ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>activos</span>
           </div>
         </div>
-        
-        {/* Panel de filtros */}
-        {showFilters && (
-          <div className="mb-6">
-            <FilterPanel
-              filters={filterConfig}
-              onFilterChange={handleFilterChange}
-              darkMode={darkMode}
-              onReset={handleResetFilters}
-            />
-          </div>
-        )}
         
         {/* Contenido principal */}
         {loading ? (
@@ -303,22 +173,14 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
               Reintentar
             </button>
           </div>
-        ) : filteredTransitos.length === 0 ? (
+        ) : transitosPendientes.length === 0 ? (
           <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>No se encontraron tránsitos con los filtros aplicados</p>
-            {(searchTerm || Object.values(filters).some(v => v)) && (
-              <button 
-                onClick={handleResetFilters}
-                className="mt-4 text-blue-500 hover:text-blue-600"
-              >
-                Limpiar filtros
-              </button>
-            )}
+            <p>No hay tránsitos pendientes de precintar</p>
           </div>
         ) : vistaMiniatura ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filteredTransitos.map((transito) => (
+            {transitosPendientes.map((transito) => (
               <TransitoMiniCard
                 key={transito.id}
                 transito={transito}
