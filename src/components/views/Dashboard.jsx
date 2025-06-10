@@ -12,11 +12,10 @@ import apiService from '../../services/api.service';
 const DashboardView = ({ onModuleClick }) => {
   const [darkMode, setDarkMode, toggleDarkMode] = useDarkMode();
   const [stats, setStats] = useState({
-    precintados: 0,
-    enEspera: 0,
-    porDesprecintar: 0,
-    alertas: 0,
-    eficiencia: 0
+    precintados: { valor: 0, vsPromedio: 0, vsAyer: 0 },
+    enEspera: { valor: 0, vsPromedio: 0, vsAyer: 0 },
+    porDesprecintar: { valor: 0, vsPromedio: 0, vsAyer: 0 },
+    alertas: { valor: 0, vsPromedio: 0, vsAyer: 0 }
   });
 
   // Estado para la actividad reciente
@@ -36,11 +35,10 @@ const DashboardView = ({ onModuleClick }) => {
     // Simular carga de estadísticas
     // En producción, esto vendría de una API
     setStats({
-      precintados: 47,
-      enEspera: 12,
-      porDesprecintar: 7,
-      alertas: 3,
-      eficiencia: 98
+      precintados: { valor: 47, vsPromedio: +8, vsAyer: -2 },
+      enEspera: { valor: 12, vsPromedio: +3, vsAyer: 0 },
+      porDesprecintar: { valor: 7, vsPromedio: -2, vsAyer: -3 },
+      alertas: { valor: 3, vsPromedio: -1, vsAyer: +1 }
     });
 
     // Simular actividad reciente
@@ -94,7 +92,7 @@ const DashboardView = ({ onModuleClick }) => {
       title: 'Tránsitos Pendientes', 
       icon: Package, 
       color: 'bg-blue-600', 
-      count: stats.enEspera, 
+      count: stats.enEspera.valor, 
       notification: notifications.transitos,
       description: 'Vehículos esperando precintado'
     },
@@ -119,7 +117,7 @@ const DashboardView = ({ onModuleClick }) => {
       title: 'Alertas Operativas', 
       icon: AlertTriangle, 
       color: 'bg-orange-600', 
-      count: stats.alertas, 
+      count: stats.alertas.valor, 
       notification: notifications.alertas,
       description: 'Requieren atención'
     },
@@ -137,7 +135,7 @@ const DashboardView = ({ onModuleClick }) => {
       subtitle: 'Llegadas pendientes', 
       icon: Package, 
       color: 'bg-red-600', 
-      count: stats.porDesprecintar, 
+      count: stats.porDesprecintar.valor, 
       importante: true, 
       notification: notifications.desprecintar,
       description: 'Camiones internacionales'
@@ -347,78 +345,105 @@ const DashboardView = ({ onModuleClick }) => {
           <h2 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Resumen del Día
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Tooltip text="Tránsitos completados hoy">
               <div className="text-center p-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-help">
-                <p className="text-2xl sm:text-3xl font-bold text-green-500">{stats.precintados}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-green-500">{stats.precintados.valor}</p>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Precintados</p>
+                <div className="mt-2 space-y-1">
+                  <p className={`text-xs flex items-center justify-center ${stats.precintados.vsPromedio >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <span className="mr-1">{stats.precintados.vsPromedio >= 0 ? '🔼' : '🔽'}</span> 
+                    {stats.precintados.vsPromedio > 0 && '+'}{stats.precintados.vsPromedio} vs promedio semanal
+                  </p>
+                  <p className={`text-xs flex items-center justify-center ${
+                    stats.precintados.vsAyer === 0 ? 'text-gray-400' : 
+                    stats.precintados.vsAyer > 0 ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    <span className="mr-1">{
+                      stats.precintados.vsAyer === 0 ? '➖' : 
+                      stats.precintados.vsAyer > 0 ? '🔼' : '🔽'
+                    }</span> 
+                    {stats.precintados.vsAyer === 0 ? 'igual que ayer' : 
+                     `${stats.precintados.vsAyer > 0 ? '+' : ''}${stats.precintados.vsAyer} vs ayer`}
+                  </p>
+                </div>
               </div>
             </Tooltip>
             
             <Tooltip text="Vehículos esperando en cola">
               <div className="text-center p-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-help">
-                <p className="text-2xl sm:text-3xl font-bold text-blue-500">{stats.enEspera}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-blue-500">{stats.enEspera.valor}</p>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>En Espera</p>
+                <div className="mt-2 space-y-1">
+                  <p className={`text-xs flex items-center justify-center ${stats.enEspera.vsPromedio >= 0 ? 'text-red-400' : 'text-green-400'}`}>
+                    <span className="mr-1">{stats.enEspera.vsPromedio >= 0 ? '🔼' : '🔽'}</span> 
+                    {stats.enEspera.vsPromedio > 0 && '+'}{stats.enEspera.vsPromedio} vs promedio semanal
+                  </p>
+                  <p className={`text-xs flex items-center justify-center ${
+                    stats.enEspera.vsAyer === 0 ? 'text-gray-400' : 
+                    stats.enEspera.vsAyer > 0 ? 'text-red-400' : 'text-green-400'
+                  }`}>
+                    <span className="mr-1">{
+                      stats.enEspera.vsAyer === 0 ? '➖' : 
+                      stats.enEspera.vsAyer > 0 ? '🔼' : '🔽'
+                    }</span> 
+                    {stats.enEspera.vsAyer === 0 ? 'igual que ayer' : 
+                     `${stats.enEspera.vsAyer > 0 ? '+' : ''}${stats.enEspera.vsAyer} vs ayer`}
+                  </p>
+                </div>
               </div>
             </Tooltip>
             
             <Tooltip text="Camiones internacionales por procesar">
               <div className="text-center p-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-help">
-                <p className="text-2xl sm:text-3xl font-bold text-red-500">{stats.porDesprecintar}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-red-500">{stats.porDesprecintar.valor}</p>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Por Desprecintar</p>
+                <div className="mt-2 space-y-1">
+                  <p className={`text-xs flex items-center justify-center ${stats.porDesprecintar.vsPromedio <= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <span className="mr-1">{stats.porDesprecintar.vsPromedio >= 0 ? '🔼' : '🔽'}</span> 
+                    {stats.porDesprecintar.vsPromedio > 0 && '+'}{stats.porDesprecintar.vsPromedio} vs promedio semanal
+                  </p>
+                  <p className={`text-xs flex items-center justify-center ${
+                    stats.porDesprecintar.vsAyer === 0 ? 'text-gray-400' : 
+                    stats.porDesprecintar.vsAyer > 0 ? 'text-red-400' : 'text-green-400'
+                  }`}>
+                    <span className="mr-1">{
+                      stats.porDesprecintar.vsAyer === 0 ? '➖' : 
+                      stats.porDesprecintar.vsAyer > 0 ? '🔼' : '🔽'
+                    }</span> 
+                    {stats.porDesprecintar.vsAyer === 0 ? 'igual que ayer' : 
+                     `${stats.porDesprecintar.vsAyer > 0 ? '+' : ''}${stats.porDesprecintar.vsAyer} vs ayer`}
+                  </p>
+                </div>
               </div>
             </Tooltip>
             
             <Tooltip text="Alertas activas del sistema">
               <div className="text-center p-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-help">
-                <p className="text-2xl sm:text-3xl font-bold text-orange-500">{stats.alertas}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-orange-500">{stats.alertas.valor}</p>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Alertas</p>
-              </div>
-            </Tooltip>
-            
-            <Tooltip text="Porcentaje de tránsitos completados a tiempo">
-              <div className={`text-center p-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-help ${
-                window.innerWidth < 768 ? 'col-span-2' : ''
-              }`}>
-                <p className="text-2xl sm:text-3xl font-bold text-purple-500">{stats.eficiencia}%</p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Eficiencia</p>
+                <div className="mt-2 space-y-1">
+                  <p className={`text-xs flex items-center justify-center ${stats.alertas.vsPromedio <= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <span className="mr-1">{stats.alertas.vsPromedio >= 0 ? '🔼' : '🔽'}</span> 
+                    {stats.alertas.vsPromedio > 0 && '+'}{stats.alertas.vsPromedio} vs promedio semanal
+                  </p>
+                  <p className={`text-xs flex items-center justify-center ${
+                    stats.alertas.vsAyer === 0 ? 'text-gray-400' : 
+                    stats.alertas.vsAyer > 0 ? 'text-red-400' : 'text-green-400'
+                  }`}>
+                    <span className="mr-1">{
+                      stats.alertas.vsAyer === 0 ? '➖' : 
+                      stats.alertas.vsAyer > 0 ? '🔼' : '🔽'
+                    }</span> 
+                    {stats.alertas.vsAyer === 0 ? 'igual que ayer' : 
+                     `${stats.alertas.vsAyer > 0 ? '+' : ''}${stats.alertas.vsAyer} vs ayer`}
+                  </p>
+                </div>
               </div>
             </Tooltip>
           </div>
         </div>
 
-        {/* Quick Stats Cards */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-7xl mx-auto">
-          <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
-            <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
-              Tiempo Promedio
-            </h3>
-            <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              12 min
-            </p>
-            <p className="text-xs text-green-500 mt-1">↓ 3 min vs ayer</p>
-          </div>
-          
-          <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
-            <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
-              Próximo Turno
-            </h3>
-            <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              14:00
-            </p>
-            <p className="text-xs text-gray-500 mt-1">5 operarios</p>
-          </div>
-          
-          <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
-            <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
-              Inspecciones MGAP
-            </h3>
-            <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              3
-            </p>
-            <p className="text-xs text-yellow-500 mt-1">Pendientes hoy</p>
-          </div>
-        </div>
       </main>
     </div>
   );
