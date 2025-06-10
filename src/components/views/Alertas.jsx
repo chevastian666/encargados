@@ -1,30 +1,206 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { AlertTriangle, Check, X, Clock, Info, Filter, AlertCircle, ChevronDown, ChevronUp, CheckCircle, Truck, Package, Layers, Users } from 'lucide-react';
+import { AlertTriangle, Check, X, Clock, Info, Filter, AlertCircle, ChevronDown, ChevronUp, CheckCircle, Truck, Package, Layers, Users, MessageCircle, Send, User } from 'lucide-react';
 
-// Simulación de datos de alertas con campos adicionales
+// Simulación de datos de alertas con campos adicionales incluyendo comentarios
 const mockAlertas = [
   // Alertas de tránsito - Camión AB123CD
-  { id: 1, tipo: 'Camión sin chófer', mensaje: 'Camión AB123CD sin chófer asignado', prioridad: 'alta', timestamp: new Date(Date.now() - 30 * 60 * 1000), transitoId: 'AB123CD', deposito: null, resuelto: false, detalles: 'El camión está en la puerta principal esperando asignación. Tiempo estimado de espera: 45 minutos.', accionRequerida: 'Asignar chófer disponible urgentemente' },
-  { id: 2, tipo: 'Camión sin documentación', mensaje: 'Camión AB123CD falta documentación', prioridad: 'media', timestamp: new Date(Date.now() - 45 * 60 * 1000), transitoId: 'AB123CD', deposito: null, resuelto: false, detalles: 'Faltan: Remito, Carta de porte', accionRequerida: 'Solicitar documentación al transportista' },
-  { id: 3, tipo: 'Camión demorado', mensaje: 'Camión AB123CD con demora de 2 horas', prioridad: 'alta', timestamp: new Date(Date.now() - 60 * 60 * 1000), transitoId: 'AB123CD', deposito: null, resuelto: false, detalles: 'Demora causada por congestión en acceso principal' },
+  { 
+    id: 1, 
+    tipo: 'Camión sin chófer', 
+    mensaje: 'Camión AB123CD sin chófer asignado', 
+    prioridad: 'alta', 
+    timestamp: new Date(Date.now() - 30 * 60 * 1000), 
+    transitoId: 'AB123CD', 
+    deposito: null, 
+    resuelto: false, 
+    detalles: 'El camión está en la puerta principal esperando asignación. Tiempo estimado de espera: 45 minutos.', 
+    accionRequerida: 'Asignar chófer disponible urgentemente',
+    comentarios: [
+      {
+        id: 1,
+        autor: 'María García',
+        texto: 'Contactando con chóferes disponibles',
+        timestamp: new Date(Date.now() - 25 * 60 * 1000)
+      },
+      {
+        id: 2,
+        autor: 'Carlos Rodríguez',
+        texto: 'Pedro López confirmó disponibilidad, llegará en 15 minutos',
+        timestamp: new Date(Date.now() - 10 * 60 * 1000)
+      }
+    ]
+  },
+  { 
+    id: 2, 
+    tipo: 'Camión sin documentación', 
+    mensaje: 'Camión AB123CD falta documentación', 
+    prioridad: 'media', 
+    timestamp: new Date(Date.now() - 45 * 60 * 1000), 
+    transitoId: 'AB123CD', 
+    deposito: null, 
+    resuelto: false, 
+    detalles: 'Faltan: Remito, Carta de porte', 
+    accionRequerida: 'Solicitar documentación al transportista',
+    comentarios: []
+  },
+  { 
+    id: 3, 
+    tipo: 'Camión demorado', 
+    mensaje: 'Camión AB123CD con demora de 2 horas', 
+    prioridad: 'alta', 
+    timestamp: new Date(Date.now() - 60 * 60 * 1000), 
+    transitoId: 'AB123CD', 
+    deposito: null, 
+    resuelto: false, 
+    detalles: 'Demora causada por congestión en acceso principal',
+    comentarios: [
+      {
+        id: 1,
+        autor: 'Juan Pérez',
+        texto: 'Redirigiendo a puerta secundaria',
+        timestamp: new Date(Date.now() - 45 * 60 * 1000)
+      }
+    ]
+  },
   
   // Alertas de depósito - Depósito Norte
-  { id: 4, tipo: 'Capacidad máxima', mensaje: 'Depósito Norte al 95% de capacidad', prioridad: 'alta', timestamp: new Date(Date.now() - 20 * 60 * 1000), transitoId: null, deposito: 'Depósito Norte', resuelto: false, detalles: 'Espacios disponibles: 5 de 100', accionRequerida: 'Coordinar con operaciones para liberar espacio' },
-  { id: 5, tipo: 'Falta de personal', mensaje: 'Depósito Norte - 3 operarios faltantes', prioridad: 'media', timestamp: new Date(Date.now() - 15 * 60 * 1000), transitoId: null, deposito: 'Depósito Norte', resuelto: false, detalles: 'Turnos afectados: 14:00 - 22:00' },
-  { id: 6, tipo: 'Equipamiento dañado', mensaje: 'Depósito Norte - Montacargas #3 fuera de servicio', prioridad: 'media', timestamp: new Date(Date.now() - 25 * 60 * 1000), transitoId: null, deposito: 'Depósito Norte', resuelto: false },
+  { 
+    id: 4, 
+    tipo: 'Capacidad máxima', 
+    mensaje: 'Depósito Norte al 95% de capacidad', 
+    prioridad: 'alta', 
+    timestamp: new Date(Date.now() - 20 * 60 * 1000), 
+    transitoId: null, 
+    deposito: 'Depósito Norte', 
+    resuelto: false, 
+    detalles: 'Espacios disponibles: 5 de 100', 
+    accionRequerida: 'Coordinar con operaciones para liberar espacio',
+    comentarios: []
+  },
+  { 
+    id: 5, 
+    tipo: 'Falta de personal', 
+    mensaje: 'Depósito Norte - 3 operarios faltantes', 
+    prioridad: 'media', 
+    timestamp: new Date(Date.now() - 15 * 60 * 1000), 
+    transitoId: null, 
+    deposito: 'Depósito Norte', 
+    resuelto: false, 
+    detalles: 'Turnos afectados: 14:00 - 22:00',
+    comentarios: []
+  },
+  { 
+    id: 6, 
+    tipo: 'Equipamiento dañado', 
+    mensaje: 'Depósito Norte - Montacargas #3 fuera de servicio', 
+    prioridad: 'media', 
+    timestamp: new Date(Date.now() - 25 * 60 * 1000), 
+    transitoId: null, 
+    deposito: 'Depósito Norte', 
+    resuelto: false,
+    comentarios: []
+  },
   
   // Más alertas de tránsito - Camión XY789ZW
-  { id: 7, tipo: 'Camión sin chófer', mensaje: 'Camión XY789ZW sin chófer asignado', prioridad: 'alta', timestamp: new Date(Date.now() - 10 * 60 * 1000), transitoId: 'XY789ZW', deposito: null, resuelto: false },
-  { id: 8, tipo: 'Camión demorado', mensaje: 'Camión XY789ZW con demora de 1 hora', prioridad: 'media', timestamp: new Date(Date.now() - 5 * 60 * 1000), transitoId: 'XY789ZW', deposito: null, resuelto: false },
-  { id: 9, tipo: 'Carga incompleta', mensaje: 'Camión XY789ZW - Faltan 2 pallets', prioridad: 'alta', timestamp: new Date(Date.now() - 8 * 60 * 1000), transitoId: 'XY789ZW', deposito: null, resuelto: false },
+  { 
+    id: 7, 
+    tipo: 'Camión sin chófer', 
+    mensaje: 'Camión XY789ZW sin chófer asignado', 
+    prioridad: 'alta', 
+    timestamp: new Date(Date.now() - 10 * 60 * 1000), 
+    transitoId: 'XY789ZW', 
+    deposito: null, 
+    resuelto: false,
+    comentarios: []
+  },
+  { 
+    id: 8, 
+    tipo: 'Camión demorado', 
+    mensaje: 'Camión XY789ZW con demora de 1 hora', 
+    prioridad: 'media', 
+    timestamp: new Date(Date.now() - 5 * 60 * 1000), 
+    transitoId: 'XY789ZW', 
+    deposito: null, 
+    resuelto: false,
+    comentarios: []
+  },
+  { 
+    id: 9, 
+    tipo: 'Carga incompleta', 
+    mensaje: 'Camión XY789ZW - Faltan 2 pallets', 
+    prioridad: 'alta', 
+    timestamp: new Date(Date.now() - 8 * 60 * 1000), 
+    transitoId: 'XY789ZW', 
+    deposito: null, 
+    resuelto: false,
+    comentarios: []
+  },
   
   // Alertas de Depósito Sur
-  { id: 10, tipo: 'Capacidad máxima', mensaje: 'Depósito Sur al 85% de capacidad', prioridad: 'media', timestamp: new Date(Date.now() - 40 * 60 * 1000), transitoId: null, deposito: 'Depósito Sur', resuelto: false },
-  { id: 11, tipo: 'Control de temperatura', mensaje: 'Depósito Sur - Sector frío con temperatura elevada', prioridad: 'alta', timestamp: new Date(Date.now() - 15 * 60 * 1000), transitoId: null, deposito: 'Depósito Sur', resuelto: false, detalles: 'Temperatura actual: 8°C (debe ser < 5°C)', accionRequerida: 'Verificar sistema de refrigeración inmediatamente' },
+  { 
+    id: 10, 
+    tipo: 'Capacidad máxima', 
+    mensaje: 'Depósito Sur al 85% de capacidad', 
+    prioridad: 'media', 
+    timestamp: new Date(Date.now() - 40 * 60 * 1000), 
+    transitoId: null, 
+    deposito: 'Depósito Sur', 
+    resuelto: false,
+    comentarios: []
+  },
+  { 
+    id: 11, 
+    tipo: 'Control de temperatura', 
+    mensaje: 'Depósito Sur - Sector frío con temperatura elevada', 
+    prioridad: 'alta', 
+    timestamp: new Date(Date.now() - 15 * 60 * 1000), 
+    transitoId: null, 
+    deposito: 'Depósito Sur', 
+    resuelto: false, 
+    detalles: 'Temperatura actual: 8°C (debe ser < 5°C)', 
+    accionRequerida: 'Verificar sistema de refrigeración inmediatamente',
+    comentarios: [
+      {
+        id: 1,
+        autor: 'Ana Martínez',
+        texto: 'Técnico en camino, llegada estimada en 20 minutos',
+        timestamp: new Date(Date.now() - 10 * 60 * 1000)
+      }
+    ]
+  },
   
   // Alertas resueltas
-  { id: 12, tipo: 'Capacidad máxima', mensaje: 'Depósito Este al 90% de capacidad', prioridad: 'media', timestamp: new Date(Date.now() - 120 * 60 * 1000), transitoId: null, deposito: 'Depósito Este', resuelto: true, resueltoBy: 'María García' },
-  { id: 13, tipo: 'Camión sin chófer', mensaje: 'Camión CD456EF sin chófer asignado', prioridad: 'alta', timestamp: new Date(Date.now() - 180 * 60 * 1000), transitoId: 'CD456EF', deposito: null, resuelto: true, resueltoBy: 'Carlos Rodríguez' },
+  { 
+    id: 12, 
+    tipo: 'Capacidad máxima', 
+    mensaje: 'Depósito Este al 90% de capacidad', 
+    prioridad: 'media', 
+    timestamp: new Date(Date.now() - 120 * 60 * 1000), 
+    transitoId: null, 
+    deposito: 'Depósito Este', 
+    resuelto: true, 
+    resueltoBy: 'María García',
+    comentarios: [
+      {
+        id: 1,
+        autor: 'María García',
+        texto: 'Se liberaron 15 espacios tras despacho programado',
+        timestamp: new Date(Date.now() - 110 * 60 * 1000)
+      }
+    ]
+  },
+  { 
+    id: 13, 
+    tipo: 'Camión sin chófer', 
+    mensaje: 'Camión CD456EF sin chófer asignado', 
+    prioridad: 'alta', 
+    timestamp: new Date(Date.now() - 180 * 60 * 1000), 
+    transitoId: 'CD456EF', 
+    deposito: null, 
+    resuelto: true, 
+    resueltoBy: 'Carlos Rodríguez',
+    comentarios: []
+  },
 ];
 
 // Constantes
@@ -214,6 +390,81 @@ const getRelativeTime = (date) => {
   return `hace ${Math.floor(hours / 24)}d`;
 };
 
+// Componente de Comentarios
+const ComentariosSection = ({ comentarios, onAddComment, alertaId }) => {
+  const [nuevoComentario, setNuevoComentario] = useState('');
+  const [mostrandoComentarios, setMostrandoComentarios] = useState(false);
+  
+  const handleSubmit = () => {
+    if (nuevoComentario.trim()) {
+      onAddComment(alertaId, nuevoComentario.trim());
+      setNuevoComentario('');
+    }
+  };
+  
+  return (
+    <div className="mt-4 border-t border-gray-600 pt-4">
+      <button
+        onClick={() => setMostrandoComentarios(!mostrandoComentarios)}
+        className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+      >
+        <MessageCircle className="w-4 h-4" />
+        <span>Comentarios ({comentarios.length})</span>
+        {mostrandoComentarios ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+      </button>
+      
+      {mostrandoComentarios && (
+        <div className="mt-3 space-y-3">
+          {/* Lista de comentarios */}
+          {comentarios.length > 0 ? (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {comentarios.map(comentario => (
+                <div key={comentario.id} className="bg-gray-700 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <User className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="font-medium text-blue-400">{comentario.autor}</span>
+                        <span className="text-gray-500">{getRelativeTime(comentario.timestamp)}</span>
+                      </div>
+                      <p className="text-sm text-gray-300 mt-1">{comentario.texto}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 italic">No hay comentarios aún</p>
+          )}
+          
+          {/* Formulario para nuevo comentario */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={nuevoComentario}
+              onChange={(e) => setNuevoComentario(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSubmit();
+                }
+              }}
+              placeholder="Agregar un comentario..."
+              className="flex-1 px-3 py-2 text-sm rounded-lg bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400"
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={!nuevoComentario.trim()}
+              className="px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Componente principal
 const AlertasModal = ({ isOpen = true, onClose = () => {}, darkMode = true }) => {
   const [userName] = useState('Juan Pérez');
@@ -265,6 +516,21 @@ const AlertasModal = ({ isOpen = true, onClose = () => {}, darkMode = true }) =>
       navigator.vibrate(30);
     }
     console.log('Alerta ignorada:', alertaId);
+  };
+
+  const handleAddComment = (alertaId, texto) => {
+    const nuevoComentario = {
+      id: Date.now(),
+      autor: userName,
+      texto: texto,
+      timestamp: new Date()
+    };
+    
+    setAlertas(prev => prev.map(a => 
+      a.id === alertaId 
+        ? { ...a, comentarios: [...(a.comentarios || []), nuevoComentario] }
+        : a
+    ));
   };
 
   const handleFilterChange = (name, value) => {
@@ -483,6 +749,12 @@ const AlertasModal = ({ isOpen = true, onClose = () => {}, darkMode = true }) =>
                         Prioridad {prioridad.label}
                       </span>
                     )}
+                    {alerta.comentarios && alerta.comentarios.length > 0 && (
+                      <span className="flex items-center gap-1 text-xs text-blue-400">
+                        <MessageCircle className="w-3 h-3" />
+                        {alerta.comentarios.length}
+                      </span>
+                    )}
                   </div>
                   
                   <p className="text-lg text-white">
@@ -501,6 +773,35 @@ const AlertasModal = ({ isOpen = true, onClose = () => {}, darkMode = true }) =>
                       </span>
                     )}
                   </div>
+                  
+                  {/* Ver más detalles */}
+                  {(alerta.detalles || alerta.accionRequerida) && (
+                    <button
+                      onClick={() => setExpandedAlert(isExpanded ? null : alerta.id)}
+                      className="mt-2 text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    >
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      Ver {isExpanded ? 'menos' : 'más'} detalles
+                    </button>
+                  )}
+                  
+                  {/* Detalles expandidos */}
+                  {isExpanded && (
+                    <div className="mt-3 space-y-2 text-sm">
+                      {alerta.detalles && (
+                        <div className="p-3 bg-gray-600 rounded-lg">
+                          <p className="text-gray-300">{alerta.detalles}</p>
+                        </div>
+                      )}
+                      {alerta.accionRequerida && (
+                        <div className="p-3 bg-blue-900/30 rounded-lg border border-blue-800">
+                          <p className="text-blue-300">
+                            <strong>Acción requerida:</strong> {alerta.accionRequerida}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -541,6 +842,13 @@ const AlertasModal = ({ isOpen = true, onClose = () => {}, darkMode = true }) =>
             )}
           </div>
           
+          {/* Sección de comentarios */}
+          <ComentariosSection 
+            comentarios={alerta.comentarios || []}
+            onAddComment={handleAddComment}
+            alertaId={alerta.id}
+          />
+          
           {isResolving && (
             <div className="absolute inset-0 flex items-center justify-center bg-green-500 bg-opacity-20 rounded-xl">
               <CheckCircle className="w-16 h-16 text-green-600 animate-pulse" />
@@ -561,6 +869,11 @@ const AlertasModal = ({ isOpen = true, onClose = () => {}, darkMode = true }) =>
       media: grupo.alertas.filter(a => a.prioridad === 'media').length,
       baja: grupo.alertas.filter(a => a.prioridad === 'baja').length
     };
+    
+    // Contar total de comentarios en el grupo
+    const totalComentarios = grupo.alertas.reduce((sum, alerta) => 
+      sum + (alerta.comentarios ? alerta.comentarios.length : 0), 0
+    );
     
     const getIcon = () => {
       const iconClass = "w-5 h-5 text-white";
@@ -608,6 +921,11 @@ const AlertasModal = ({ isOpen = true, onClose = () => {}, darkMode = true }) =>
                 </h3>
                 <p className="text-sm text-gray-400">
                   {grupo.alertas.length} alerta{grupo.alertas.length > 1 ? 's' : ''} pendiente{grupo.alertas.length > 1 ? 's' : ''}
+                  {totalComentarios > 0 && (
+                    <span className="ml-2">
+                      • {totalComentarios} comentario{totalComentarios > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </p>
                 {/* Indicadores de prioridad */}
                 <div className="flex items-center gap-2 mt-1">
@@ -624,6 +942,12 @@ const AlertasModal = ({ isOpen = true, onClose = () => {}, darkMode = true }) =>
                   {contadorPrioridades.baja > 0 && (
                     <span className="text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-full">
                       {contadorPrioridades.baja} baja{contadorPrioridades.baja > 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {totalComentarios > 0 && (
+                    <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full flex items-center gap-1">
+                      <MessageCircle className="w-3 h-3" />
+                      {totalComentarios}
                     </span>
                   )}
                 </div>
