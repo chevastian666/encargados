@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link } from 'lucide-react';
+import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link, Loader2 } from 'lucide-react';
 import { Modal, SidePanel } from '../common';
 import TransitoDetails from '../TransitoDetails';
 import { useApiData } from '../../hooks';
@@ -14,6 +14,7 @@ import TransitoMiniCard from '../cards/TransitoMiniCard';
 const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
   const [selectedTransito, setSelectedTransito] = useState(null);
   const [showSidePanel, setShowSidePanel] = useState(false);
+  const [loadingTransitoId, setLoadingTransitoId] = useState(null); // Nuevo estado para controlar loading
   const [vistaMiniatura, setVistaMiniatura] = useState(() => {
     const saved = localStorage.getItem('vistaMiniatura');
     return saved === 'true';
@@ -36,9 +37,15 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
 
   const transitosPendientes = transitosData?.data || [];
 
-  const handleVerDetalles = (transito) => {
+  const handleVerDetalles = async (transito) => {
+    setLoadingTransitoId(transito.id);
+    
+    // Simular un pequeño delay mínimo para asegurar que el feedback sea visible
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     setSelectedTransito(transito);
     setShowSidePanel(true);
+    setLoadingTransitoId(null);
   };
 
   // Agrupar por estado
@@ -85,6 +92,7 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
 
   const renderTransitoCard = (transito) => {
     const config = estadosConfig[transito.estado];
+    const isLoading = loadingTransitoId === transito.id;
     
     return (
       <div 
@@ -103,6 +111,7 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
           touch-manipulation
           select-none
           transform hover:scale-[1.02]
+          ${isLoading ? 'opacity-75' : ''}
         `}
       >
         {/* Badge flotante mejorado para estado crítico */}
@@ -155,13 +164,51 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
           </p>
         </div>
 
+        {/* OPCIÓN 1: Botón con texto "Cargando..." */}
         <button 
           onClick={() => handleVerDetalles(transito)}
+          disabled={isLoading}
+          className={`
+            w-full mt-5 px-5 py-3 
+            ${isLoading 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800'
+            }
+            text-white font-medium
+            rounded-lg 
+            transition-all duration-200 
+            flex items-center justify-center gap-2
+            touch-manipulation
+            select-none
+            ${!isLoading && 'active:scale-95'}
+            shadow-md hover:shadow-lg
+          `}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Cargando...
+            </>
+          ) : (
+            <>
+              Ver Detalles
+              <ChevronRight className="w-5 h-5" />
+            </>
+          )}
+        </button>
+
+        {/* OPCIÓN 2 (Alternativa): Botón con spinner a la derecha */}
+        {/* Descomentar esta opción y comentar la anterior si prefieres esta versión */}
+        {/*
+        <button 
+          onClick={() => handleVerDetalles(transito)}
+          disabled={isLoading}
           className={`
             w-full mt-5 px-5 py-3 
             bg-gradient-to-r from-blue-500 to-blue-600
             hover:from-blue-600 hover:to-blue-700
             active:from-blue-700 active:to-blue-800
+            ${isLoading ? 'cursor-wait' : ''}
             text-white font-medium
             rounded-lg 
             transition-all duration-200 
@@ -173,8 +220,13 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
           `}
         >
           Ver Detalles
-          <ChevronRight className="w-5 h-5" />
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <ChevronRight className="w-5 h-5" />
+          )}
         </button>
+        */}
       </div>
     );
   };
@@ -251,6 +303,7 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                   darkMode={darkMode}
                   onClick={() => handleVerDetalles(transito)}
                   className="touch-manipulation"
+                  isLoading={loadingTransitoId === transito.id}
                 />
               ))}
             </div>
