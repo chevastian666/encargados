@@ -8,7 +8,7 @@ import apiService from '../../services/api.service';
 import TransitoMiniCard from '../cards/TransitoMiniCard';
 
 /**
- * Vista de Tránsitos Pendientes de Precintar
+ * Vista de Tránsitos Pendientes de Precintar - Optimizada para Touch
  * @param {Object} props - Propiedades del componente
  * @param {boolean} props.isOpen - Si el modal está abierto
  * @param {Function} props.onClose - Función para cerrar el modal
@@ -73,7 +73,9 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
         shadow-sm hover:shadow-xl
         transition-all duration-300
         overflow-hidden
-        p-4 sm:p-6
+        p-5 sm:p-6
+        touch-manipulation
+        select-none
       `}
     >
       {/* Indicador lateral de estado */}
@@ -82,9 +84,9 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
       {/* Badge flotante si estado es crítico */}
       {transito.estado === 'precintando' && (
         <div className="absolute -top-2 -right-2">
-          <span className="relative flex h-3 w-3">
+          <span className="relative flex h-4 w-4">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
           </span>
         </div>
       )}
@@ -99,34 +101,47 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
           </p>
         </div>
         <span className={`
-          px-3 py-1 rounded-full text-xs font-semibold text-white 
+          px-3 py-1.5 rounded-full text-xs font-semibold text-white 
           ${ESTADOS[transito.estado].color} animate-pulse
+          select-none
         `}>
           {ESTADOS[transito.estado].label}
         </span>
       </div>
 
-      <div className={`space-y-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      <div className={`space-y-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
         <p className="text-sm flex items-center gap-2">
-          <MapPin className="w-4 h-4" />
-          {transito.deposito}
+          <MapPin className="w-5 h-5 flex-shrink-0" />
+          <span className="truncate">{transito.deposito}</span>
         </p>
         <p className="text-sm flex items-center gap-2">
-          <Package className="w-4 h-4" />
-          {transito.tipo === 'contenedor' ? `Contenedor: ${transito.codigo}` : 'Carga con Lona'}
+          <Package className="w-5 h-5 flex-shrink-0" />
+          <span className="truncate">
+            {transito.tipo === 'contenedor' ? `Contenedor: ${transito.codigo}` : 'Carga con Lona'}
+          </span>
         </p>
         <p className="text-sm font-semibold flex items-center gap-2">
-          <Clock className="w-4 h-4" />
-          Salida: {transito.salida}
+          <Clock className="w-5 h-5 flex-shrink-0" />
+          <span>Salida: {transito.salida}</span>
         </p>
       </div>
 
       <button 
         onClick={() => handleVerDetalles(transito)}
-        className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+        className={`
+          w-full mt-5 px-5 py-3 
+          bg-blue-500 hover:bg-blue-600 active:bg-blue-700
+          text-white font-medium
+          rounded-lg 
+          transition-all duration-200 
+          flex items-center justify-center gap-2
+          touch-manipulation
+          select-none
+          active:scale-95
+        `}
       >
         Ver Detalles
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight className="w-5 h-5" />
       </button>
     </div>
   );
@@ -138,79 +153,98 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
       title="Tránsitos Pendientes de Precintar"
       size="large"
     >
-      <div className={`${darkMode ? 'text-white' : 'text-gray-900'}`}>
+      <div className={`${darkMode ? 'text-white' : 'text-gray-900'} select-none`}>
         {/* Header con controles */}
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
           <button
             onClick={() => setVistaMiniatura(!vistaMiniatura)}
             className={`
-              px-4 py-2 rounded-lg 
-              ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-black'}
+              px-5 py-3 rounded-lg font-medium
+              ${darkMode ? 'bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-white' : 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-black'}
               transition-colors
+              touch-manipulation
+              select-none
+              active:scale-95
             `}
           >
             {vistaMiniatura ? "Ver por estado" : "Vista miniatura"}
           </button>
 
-          <div className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} shadow`}>
+          <div className={`
+            px-5 py-3 rounded-lg 
+            ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} 
+            shadow select-none
+          `}>
             <span className="text-2xl font-bold text-blue-500">{transitosPendientes.length}</span>
             <span className={`ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>activos</span>
           </div>
         </div>
         
-        {/* Contenido principal */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-red-500 mb-4">Error al cargar los tránsitos</p>
-            <button 
-              onClick={refetch}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-            >
-              Reintentar
-            </button>
-          </div>
-        ) : transitosPendientes.length === 0 ? (
-          <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>No hay tránsitos pendientes de precintar</p>
-          </div>
-        ) : vistaMiniatura ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {transitosPendientes.map((transito) => (
-              <TransitoMiniCard
-                key={transito.id}
-                transito={transito}
-                darkMode={darkMode}
-                onClick={() => handleVerDetalles(transito)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {Object.entries(transitosPorEstado).map(([estado, transitos]) => {
-              if (transitos.length === 0) return null;
+        {/* Contenido principal con scroll optimizado */}
+        <div className="touch-manipulation">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-red-500 mb-4">Error al cargar los tránsitos</p>
+              <button 
+                onClick={refetch}
+                className={`
+                  px-5 py-3 
+                  bg-blue-500 hover:bg-blue-600 active:bg-blue-700
+                  text-white font-medium
+                  rounded-lg
+                  touch-manipulation
+                  select-none
+                  active:scale-95
+                `}
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : transitosPendientes.length === 0 ? (
+            <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <Package className="w-20 h-20 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">No hay tránsitos pendientes de precintar</p>
+            </div>
+          ) : vistaMiniatura ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto overscroll-contain">
+              {transitosPendientes.map((transito) => (
+                <TransitoMiniCard
+                  key={transito.id}
+                  transito={transito}
+                  darkMode={darkMode}
+                  onClick={() => handleVerDetalles(transito)}
+                  className="touch-manipulation"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-6 overflow-y-auto overscroll-contain">
+              {Object.entries(transitosPorEstado).map(([estado, transitos]) => {
+                if (transitos.length === 0) return null;
 
-              return (
-                <div key={estado}>
-                  <h3 className={`
-                    text-lg font-semibold mb-3 flex items-center gap-2
-                    ${darkMode ? 'text-white' : 'text-gray-900'}
-                  `}>
-                    <span className={`w-3 h-3 rounded-full ${ESTADOS[estado].color}`} />
-                    {ESTADOS[estado].label} ({transitos.length})
-                  </h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {transitos.map(renderTransitoCard)}
+                return (
+                  <div key={estado}>
+                    <h3 className={`
+                      text-lg font-semibold mb-4 flex items-center gap-2
+                      ${darkMode ? 'text-white' : 'text-gray-900'}
+                      select-none
+                    `}>
+                      <span className={`w-4 h-4 rounded-full ${ESTADOS[estado].color}`} />
+                      {ESTADOS[estado].label} ({transitos.length})
+                    </h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {transitos.map(renderTransitoCard)}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Panel lateral con detalles */}
