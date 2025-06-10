@@ -5,6 +5,8 @@ import TransitoDetails from '../TransitoDetails';
 import { useApiData } from '../../hooks';
 import { ESTADOS, DEPOSITOS } from '../../constants/constants';
 import apiService from '../../services/api.service';
+import TransitoMiniCard from '../cards/TransitoMiniCard';
+
 
 /**
  * Vista de Tránsitos Pendientes de Precintar
@@ -24,6 +26,8 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
     tipo: '',
     turno: ''
   });
+  const [vistaMiniatura, setVistaMiniatura] = useState(false);
+
 
   // Usar el hook de API con polling automático
   const { data: transitosData, loading, error, refetch } = useApiData(
@@ -234,7 +238,18 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
               darkMode={darkMode}
             />
           </div>
-          
+
+          <button
+  onClick={() => setVistaMiniatura(!vistaMiniatura)}
+  className={`
+    px-4 py-2 rounded-lg 
+    ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-black'}
+    transition-colors mb-4
+  `}
+>
+  {vistaMiniatura ? "Ver por estado" : "Vista miniatura"}
+</button>
+
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -295,32 +310,41 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
               </button>
             )}
           </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Mostrar por grupos de estado */}
-            {Object.entries(transitosPorEstado).map(([estado, transitos]) => {
-              if (transitos.length === 0) return null;
-              
-              return (
-                <div key={estado}>
-                  <h3 className={`
-                    text-lg font-semibold mb-3 flex items-center gap-2
-                    ${darkMode ? 'text-white' : 'text-gray-900'}
-                  `}>
-                    <span className={`
-                      w-3 h-3 rounded-full 
-                      ${ESTADOS[estado].color}
-                    `} />
-                    {ESTADOS[estado].label} ({transitos.length})
-                  </h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {transitos.map(renderTransitoCard)}
-                  </div>
-                </div>
-              );
-            })}
+        ) : vistaMiniatura ? (
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    {filteredTransitos.map((transito) => (
+  <TransitoMiniCard
+    key={transito.id}
+    transito={transito}
+    darkMode={darkMode}
+    onClick={() => handleVerDetalles(transito)}
+  />
+))}
+
+  </div>
+) : (
+  <div className="space-y-6">
+    {Object.entries(transitosPorEstado).map(([estado, transitos]) => {
+      if (transitos.length === 0) return null;
+
+      return (
+        <div key={estado}>
+          <h3 className={`
+            text-lg font-semibold mb-3 flex items-center gap-2
+            ${darkMode ? 'text-white' : 'text-gray-900'}
+          `}>
+            <span className={`w-3 h-3 rounded-full ${ESTADOS[estado].color}`} />
+            {ESTADOS[estado].label} ({transitos.length})
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {transitos.map(renderTransitoCard)}
           </div>
-        )}
+        </div>
+      );
+    })}
+  </div>
+)}
+
       </div>
       
       {/* Panel lateral con detalles */}
