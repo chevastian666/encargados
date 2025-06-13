@@ -6,9 +6,77 @@ class ApiService {
     this.cache = new Map();
     this.listeners = new Map();
     this.pendingRequests = new Map();
+    this.mockData = null; // Para almacenar datos mock persistentes
   }
 
   /**
+ * Agregar observación a un tránsito
+ * @param {string} transitoId - ID del tránsito
+ * @param {string} observacion - Texto de la observación
+ * @returns {Promise<Object>} Respuesta del servidor
+ */
+async addTransitoObservacion(transitoId, observacion) {
+  try {
+    // En modo desarrollo, simular la respuesta y actualizar mock data
+    if (CONFIG.IS_DEVELOPMENT) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          // Actualizar el mock data con la nueva observación
+          if (this.mockData && this.mockData[API_ENDPOINTS.TRANSITOS_PENDIENTES]) {
+            const transitos = this.mockData[API_ENDPOINTS.TRANSITOS_PENDIENTES].data || [];
+            const transito = transitos.find(t => t.id === transitoId);
+            if (transito) {
+              if (!transito.observaciones) {
+                transito.observaciones = [];
+              }
+              transito.observaciones.push({
+                id: Date.now(),
+                texto: observacion,
+                usuario: 'Usuario Actual',
+                fecha: new Date().toISOString()
+              });
+            }
+          }
+          
+          resolve({
+            success: true,
+            data: {
+              id: Date.now(),
+              transitoId,
+              observacion,
+              timestamp: new Date().toISOString(),
+              usuario: 'Usuario Actual'
+            }
+          });
+        }, 500);
+      });
+    }
+
+    const response = await fetch(`${CONFIG.API_BASE_URL}/transitos/${transitoId}/observacion`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders()
+      },
+      body: JSON.stringify({ 
+        observacion,
+        timestamp: new Date().toISOString()
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error en addTransitoObservacion:', error);
+    throw error;
+  }
+}
+
+/**
  * Notifica un problema sin imágenes
  * @param {string} transitoId - ID del tránsito
  * @param {string} problema - Descripción del problema
@@ -194,7 +262,20 @@ async checkImageSupport() {
             chofer: 'Juan Rodríguez', 
             telefono: '+598 99 123 456',
             empresa: 'Transportes del Sur',
-            observaciones: 'Carga frágil'
+            observaciones: [
+              {
+                id: 1,
+                texto: 'Carga frágil, manejar con cuidado',
+                usuario: 'Juan Pérez',
+                fecha: new Date(Date.now() - 3600000).toISOString()
+              },
+              {
+                id: 2,
+                texto: 'Verificar documentación MGAP antes de salir',
+                usuario: 'María Silva',
+                fecha: new Date(Date.now() - 1800000).toISOString()
+              }
+            ]
           },
           { 
             id: 2, 
@@ -207,7 +288,7 @@ async checkImageSupport() {
             chofer: 'María González', 
             telefono: '+598 99 789 012',
             empresa: 'Logística Oriental',
-            observaciones: null
+            observaciones: []
           },
           { 
             id: 3, 
@@ -221,7 +302,14 @@ async checkImageSupport() {
             chofer: 'Carlos Pérez', 
             telefono: '+598 99 345 678',
             empresa: 'Transporte Internacional',
-            observaciones: 'Requiere inspección MGAP'
+            observaciones: [
+              {
+                id: 1,
+                texto: 'Requiere inspección MGAP',
+                usuario: 'Carlos Martínez',
+                fecha: new Date(Date.now() - 7200000).toISOString()
+              }
+            ]
           },
           { 
             id: 4, 
@@ -234,7 +322,7 @@ async checkImageSupport() {
             chofer: 'Ana Silva', 
             telefono: '+598 99 901 234',
             empresa: 'Cargas Express',
-            observaciones: null
+            observaciones: []
           },
           { 
             id: 5, 
@@ -248,7 +336,26 @@ async checkImageSupport() {
             chofer: 'Roberto Díaz', 
             telefono: '+598 99 567 890',
             empresa: 'Frío del Sur',
-            observaciones: 'Mantener cadena de frío'
+            observaciones: [
+              {
+                id: 1,
+                texto: 'Mantener cadena de frío en todo momento',
+                usuario: 'Ana Rodríguez',
+                fecha: new Date(Date.now() - 5400000).toISOString()
+              },
+              {
+                id: 2,
+                texto: 'Temperatura debe estar entre -18°C y -20°C',
+                usuario: 'Pedro Gómez',
+                fecha: new Date(Date.now() - 3600000).toISOString()
+              },
+              {
+                id: 3,
+                texto: 'Verificar funcionamiento del termo antes de salir',
+                usuario: 'Laura Fernández',
+                fecha: new Date(Date.now() - 1800000).toISOString()
+              }
+            ]
           }
         ],
         total: 5,
@@ -476,7 +583,21 @@ async checkImageSupport() {
       throw new Error('Error simulado para testing');
     }
     
-    return mockData[endpoint] || { data: [], error: 'Endpoint no encontrado' };
+    // Si tenemos datos persistentes, usarlos
+    if (this.mockData && this.mockData[endpoint]) {
+      return {
+        success: true,
+        ...this.mockData[endpoint]
+      };
+    }
+    
+    // Si no, inicializar con los datos por defecto
+    this.mockData = mockData;
+    
+    return {
+      success: true,
+      ...(mockData[endpoint] || { data: [], error: 'Endpoint no encontrado' })
+    };
   }
 
   // Métodos específicos para cada entidad
@@ -536,6 +657,59 @@ async checkImageSupport() {
       method: 'POST',
       body: JSON.stringify({ tipo, valor })
     });
+  }
+
+  async getDashboardStats() {
+    // En producción, esto vendría del servidor
+    // Por ahora simular datos dinámicos
+    const baseStats = {
+      precintados: 40 + Math.floor(Math.random() * 20),
+      enEspera: 8 + Math.floor(Math.random() * 10),
+      porDesprecintar: 3 + Math.floor(Math.random() * 8),
+      alertas: Math.floor(Math.random() * 6)
+    };
+
+    return {
+      ...baseStats,
+      precintadosVsPromedio: Math.floor((Math.random() - 0.5) * 10),
+      precintadosVsAyer: Math.floor((Math.random() - 0.5) * 5),
+      enEsperaVsPromedio: Math.floor((Math.random() - 0.5) * 5),
+      enEsperaVsAyer: Math.floor((Math.random() - 0.5) * 3),
+      porDesprecintarVsPromedio: Math.floor((Math.random() - 0.5) * 4),
+      porDesprecintarVsAyer: Math.floor((Math.random() - 0.5) * 2),
+      alertasVsPromedio: Math.floor((Math.random() - 0.5) * 3),
+      alertasVsAyer: Math.floor((Math.random() - 0.5) * 2),
+      tiempoPromedioEspera: 10 + Math.floor(Math.random() * 20),
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  async getHistoricalStats() {
+    // Generar datos históricos simulados
+    const generateHourlyData = () => {
+      return Array.from({ length: 24 }, (_, i) => ({
+        hour: i,
+        precintados: 30 + Math.floor(Math.random() * 20),
+        enEspera: 5 + Math.floor(Math.random() * 15),
+        alertas: Math.floor(Math.random() * 5)
+      }));
+    };
+
+    const generateDailyData = () => {
+      return Array.from({ length: 7 }, (_, i) => ({
+        day: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        precintados: 350 + Math.floor(Math.random() * 100),
+        enEspera: 100 + Math.floor(Math.random() * 50),
+        alertas: 10 + Math.floor(Math.random() * 20)
+      }));
+    };
+
+    return {
+      hourly: generateHourlyData(),
+      daily: generateDailyData(),
+      weekly: [], // Implementar si es necesario
+      timestamp: new Date().toISOString()
+    };
   }
 
   // Limpiar cache

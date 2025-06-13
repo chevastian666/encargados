@@ -12,6 +12,8 @@ import { usePolling } from './usePolling';
  * @returns {Object} - { data, loading, error, refetch }
  */
 export const useApiData = (apiMethod, dependencies = [], options = {}) => {
+  // Asegurar que dependencies sea un array
+  const deps = Array.isArray(dependencies) ? dependencies : [];
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -163,7 +165,7 @@ export const useApiData = (apiMethod, dependencies = [], options = {}) => {
     return () => {
       mountedRef.current = false;
     };
-  }, [...dependencies, isOnline]);
+  }, [...deps, isOnline]);
 
   // Polling automático
   usePolling(() => {

@@ -3,13 +3,22 @@ import { ConnectionProvider } from './contexts/ConnectionContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { 
   Dashboard, 
+  DashboardFixed,
   TransitosPendientes, 
   Desprecintar, 
   Stock, 
   Alertas, 
   Mapa, 
-  Camiones 
+  Camiones,
+  TransitosPendientesTablet,
+  StockTablet,
+  AlertasTablet,
+  AlertasFixed,
+  MapaTablet,
+  CamionesTablet,
+  DesprecintarTablet
 } from './components/views';
+import DashboardSimple from './components/views/DashboardSimple';
 import CONFIG from './constants/config';
 
 /**
@@ -61,40 +70,40 @@ const App = () => {
     <ConnectionProvider>
       <NotificationProvider>
         {/* Vista principal del Dashboard */}
-        <Dashboard onModuleClick={handleModuleClick} />
+        <DashboardFixed onModuleClick={handleModuleClick} />
         
-        {/* Modales para cada módulo */}
-        <TransitosPendientes 
+        {/* Modales para cada módulo - Versiones optimizadas para tablet */}
+        <TransitosPendientesTablet 
           isOpen={modals.transitos} 
           onClose={() => handleCloseModal('transitos')} 
           darkMode={true} 
         />
         
-        <Desprecintar 
+        <DesprecintarTablet 
           isOpen={modals.desprecintar} 
           onClose={() => handleCloseModal('desprecintar')} 
           darkMode={true} 
         />
         
-        <Stock 
+        <StockTablet 
           isOpen={modals.stock} 
           onClose={() => handleCloseModal('stock')} 
           darkMode={true} 
         />
         
-        <Alertas 
+        <AlertasFixed 
           isOpen={modals.alertas} 
           onClose={() => handleCloseModal('alertas')} 
           darkMode={true} 
         />
         
-        <Mapa 
+        <MapaTablet 
           isOpen={modals.mapa} 
           onClose={() => handleCloseModal('mapa')} 
           darkMode={true} 
         />
         
-        <Camiones 
+        <CamionesTablet 
           isOpen={modals.camiones} 
           onClose={() => handleCloseModal('camiones')} 
           darkMode={true} 
