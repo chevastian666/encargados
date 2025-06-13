@@ -4,6 +4,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { 
   Dashboard, 
   DashboardFixed,
+  DashboardCleanFixed,
   TransitosPendientes, 
   Desprecintar, 
   Stock, 
@@ -19,6 +20,8 @@ import {
   DesprecintarTablet
 } from './components/views';
 import DashboardSimple from './components/views/DashboardSimple';
+import DashboardClean from './components/views/DashboardClean';
+import CMOBanner from './components/common/CMOBanner';
 import CONFIG from './constants/config';
 
 /**
@@ -69,8 +72,14 @@ const App = () => {
   return (
     <ConnectionProvider>
       <NotificationProvider>
+        {/* Banner de notificaciones destacadas del CMO */}
+        <CMOBanner darkMode={true} onMessageClick={(message) => {
+          // Abrir el módulo de comunicación del CMO cuando se hace clic en un mensaje
+          console.log('CMO message clicked:', message);
+        }} />
+        
         {/* Vista principal del Dashboard */}
-        <DashboardFixed onModuleClick={handleModuleClick} />
+        <DashboardCleanFixed onModuleClick={handleModuleClick} />
         
         {/* Modales para cada módulo - Versiones optimizadas para tablet */}
         <TransitosPendientesTablet 

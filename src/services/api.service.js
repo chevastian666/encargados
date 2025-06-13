@@ -1,5 +1,6 @@
 import CONFIG from '../constants/config';
 import { API_ENDPOINTS, ERROR_MESSAGES } from '../constants/constants';
+import wsService from './websocket.service';
 
 class ApiService {
   constructor() {
@@ -258,7 +259,8 @@ async checkImageSupport() {
             tipo: 'contenedor', 
             codigo: 'MSKU 123456-7', 
             salida: '08:30', 
-            estado: 'esperando', 
+            estado: 'listo', 
+            tiempoRestante: 45,
             chofer: 'Juan Rodríguez', 
             telefono: '+598 99 123 456',
             empresa: 'Transportes del Sur',
@@ -284,11 +286,19 @@ async checkImageSupport() {
             deposito: 'Terminal TCP', 
             tipo: 'lona', 
             salida: '09:15', 
-            estado: 'pasando_soga', 
+            estado: 'con_problema', 
+            tiempoRestante: 15,
             chofer: 'María González', 
             telefono: '+598 99 789 012',
             empresa: 'Logística Oriental',
-            observaciones: []
+            observaciones: [
+              {
+                id: 1,
+                texto: 'Problemas con documentación DUA',
+                usuario: 'Pedro Martínez',
+                fecha: new Date(Date.now() - 600000).toISOString()
+              }
+            ]
           },
           { 
             id: 3, 
@@ -299,6 +309,7 @@ async checkImageSupport() {
             codigo: 'CSQU 987654-3', 
             salida: '09:45', 
             estado: 'precintando', 
+            tiempoRestante: 90,
             chofer: 'Carlos Pérez', 
             telefono: '+598 99 345 678',
             empresa: 'Transporte Internacional',
@@ -319,6 +330,7 @@ async checkImageSupport() {
             tipo: 'lona', 
             salida: '10:00', 
             estado: 'esperando', 
+            tiempoRestante: 180,
             chofer: 'Ana Silva', 
             telefono: '+598 99 901 234',
             empresa: 'Cargas Express',
@@ -332,7 +344,8 @@ async checkImageSupport() {
             tipo: 'refrigerado', 
             codigo: 'RFSU 543210-8', 
             salida: '10:30', 
-            estado: 'esperando', 
+            estado: 'no_sale_hoy', 
+            tiempoRestante: null,
             chofer: 'Roberto Díaz', 
             telefono: '+598 99 567 890',
             empresa: 'Frío del Sur',
@@ -356,9 +369,46 @@ async checkImageSupport() {
                 fecha: new Date(Date.now() - 1800000).toISOString()
               }
             ]
+          },
+          // Agregar algunos tr\u00e1nsitos completados para demostrar el tablero
+          { 
+            id: 6, 
+            matricula: 'COM 1111', 
+            secundaria: 'PLT 2222', 
+            deposito: 'Puerto MVD', 
+            tipo: 'contenedor', 
+            codigo: 'DONE 111111-1', 
+            salida: '07:00', 
+            estado: 'completado', 
+            tiempoRestante: null,
+            chofer: 'Fernando L\u00f3pez', 
+            telefono: '+598 99 111 222',
+            empresa: 'Express Cargo',
+            observaciones: [
+              {
+                id: 1,
+                texto: 'Precintado completado sin inconvenientes',
+                usuario: 'Sistema',
+                fecha: new Date(Date.now() - 10800000).toISOString()
+              }
+            ]
+          },
+          { 
+            id: 7, 
+            matricula: 'COM 3333', 
+            secundaria: 'PLT 4444', 
+            deposito: 'Terminal TCP', 
+            tipo: 'lona', 
+            salida: '07:30', 
+            estado: 'completado', 
+            tiempoRestante: null,
+            chofer: 'Patricia M\u00e9ndez', 
+            telefono: '+598 99 333 444',
+            empresa: 'Transporte R\u00e1pido',
+            observaciones: []
           }
         ],
-        total: 5,
+        total: 7,
         lastUpdate: new Date().toISOString()
       },
       [API_ENDPOINTS.TRANSITOS_DESPRECINTAR]: {
@@ -632,9 +682,118 @@ async checkImageSupport() {
   }
 
   async updateTransitoEstado(transitoId, nuevoEstado) {
+    // En modo desarrollo, simular y emitir eventos WebSocket
+    if (CONFIG.IS_DEVELOPMENT) {
+      // Simular demora de red
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Buscar el tránsito para obtener información
+      const mockTransitos = this.mockData?.[API_ENDPOINTS.TRANSITOS_PENDIENTES]?.data || [];
+      const transito = mockTransitos.find(t => t.id === transitoId);
+      
+      if (transito) {
+        const oldState = transito.estado;
+        
+        // Actualizar estado en mock data
+        transito.estado = nuevoEstado;
+        
+        // Emitir evento WebSocket para actualización en tiempo real
+        wsService.notifyListeners('transit_update', {
+          transitId,
+          newState: nuevoEstado,
+          oldState: oldState,
+          matricula: transito.matricula,
+          timestamp: Date.now(),
+          additionalData: {
+            chofer: transito.chofer,
+            deposito: transito.deposito
+          }
+        });
+        
+        // Generar alertas automáticas según el cambio de estado
+        if (nuevoEstado === 'con_problema') {
+          wsService.notifyListeners('auto_alert', {
+            type: 'transit_state_change',
+            severity: 'critical',
+            title: 'Tránsito con problema',
+            message: `El tránsito ${transito.matricula} reporta problemas`,
+            transitId,
+            matricula: transito.matricula,
+            timestamp: Date.now(),
+            requiresAction: true,
+            suggestedActions: ['Contactar al chofer', 'Verificar documentación', 'Asignar personal de apoyo']
+          });
+        } else if (nuevoEstado === 'listo' && oldState === 'esperando') {
+          wsService.notifyListeners('auto_alert', {
+            type: 'transit_state_change',
+            severity: 'info',
+            title: 'Tránsito listo para precintar',
+            message: `El tránsito ${transito.matricula} está listo para ser precintado`,
+            transitId,
+            matricula: transito.matricula,
+            timestamp: Date.now(),
+            requiresAction: true
+          });
+        }
+      }
+      
+      return {
+        success: true,
+        message: 'Estado actualizado correctamente'
+      };
+    }
+    
+    // En producción, usar la API real
     return this.makeRequest(`/transitos/${transitoId}/estado`, {
       method: 'PUT',
       body: JSON.stringify({ estado: nuevoEstado })
+    });
+  }
+
+  async createTransito(transitoData) {
+    // En modo desarrollo, simular creación
+    if (CONFIG.IS_DEVELOPMENT) {
+      // Simular demora de red
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const newTransito = {
+        id: Date.now(),
+        ...transitoData,
+        estado: 'esperando',
+        tiempoRestante: Math.floor(Math.random() * 180) + 30,
+        observaciones: transitoData.observaciones ? [{
+          id: 1,
+          texto: transitoData.observaciones,
+          usuario: 'Usuario Actual',
+          fecha: new Date().toISOString()
+        }] : []
+      };
+      
+      // Agregar a mock data
+      if (!this.mockData) this.mockData = {};
+      if (!this.mockData[API_ENDPOINTS.TRANSITOS_PENDIENTES]) {
+        this.mockData[API_ENDPOINTS.TRANSITOS_PENDIENTES] = { data: [] };
+      }
+      
+      this.mockData[API_ENDPOINTS.TRANSITOS_PENDIENTES].data.unshift(newTransito);
+      
+      // Emitir evento de nuevo tránsito
+      wsService.notifyListeners('transit_update', {
+        type: 'new_transit',
+        transit: newTransito,
+        timestamp: Date.now()
+      });
+      
+      return {
+        success: true,
+        data: newTransito
+      };
+    }
+    
+    // En producción, usar la API real
+    return this.makeRequest('/transitos', {
+      method: 'POST',
+      body: JSON.stringify(transitoData)
     });
   }
 
@@ -737,10 +896,244 @@ async checkImageSupport() {
       }))
     };
   }
+
+  // Métodos para comunicación con CMO
+  async getCMOMessages(filters = {}) {
+    // En desarrollo, simular mensajes del CMO
+    if (CONFIG.IS_DEVELOPMENT) {
+      return this.simulateApiCall({
+        success: true,
+        data: this.generateMockCMOMessages()
+      }, 300);
+    }
+    
+    return this.fetchWithCache('/cmo/messages', {
+      params: filters
+    });
+  }
+
+  async markCMOMessageAsRead(messageId) {
+    return this.makeRequest(`/cmo/messages/${messageId}/read`, {
+      method: 'PUT'
+    });
+  }
+
+  async sendCMOResponse(response) {
+    return this.makeRequest('/cmo/responses', {
+      method: 'POST',
+      body: JSON.stringify(response)
+    });
+  }
+
+  // Generar mensajes mock del CMO
+  generateMockCMOMessages() {
+    const now = Date.now();
+    return [
+      {
+        id: 'cmo_1',
+        type: 'correction',
+        priority: 'high',
+        title: 'Cambiar precinto',
+        content: 'Cambiar precinto del contenedor MSKU-123456. El actual está dañado.',
+        transitId: 'ABC-1234',
+        sender: 'Operador CMO - Juan Silva',
+        timestamp: now - 5 * 60 * 1000, // 5 minutos atrás
+        read: false,
+        showBanner: true,
+        responses: []
+      },
+      {
+        id: 'cmo_2',
+        type: 'alert',
+        priority: 'high',
+        title: 'Corrección de datos',
+        content: 'Chofer reportó mal su nombre. Corregir: José González (no Juan González)',
+        transitId: 'GHI-9012',
+        sender: 'Supervisor CMO - María Pérez',
+        timestamp: now - 15 * 60 * 1000, // 15 minutos atrás
+        read: false,
+        showBanner: true,
+        responses: [
+          {
+            text: 'Recibido',
+            type: 'received',
+            timestamp: now - 10 * 60 * 1000,
+            user: 'Encargado Puerto'
+          }
+        ]
+      },
+      {
+        id: 'cmo_3',
+        type: 'instruction',
+        priority: 'normal',
+        title: 'Verificar documentación',
+        content: 'Favor verificar documentación DUA del tránsito antes de precintar.',
+        transitId: 'DEF-5678',
+        sender: 'Operador CMO - Pedro Martínez',
+        timestamp: now - 30 * 60 * 1000, // 30 minutos atrás
+        read: true,
+        responses: [
+          {
+            text: 'Documentación verificada y correcta',
+            type: 'custom',
+            timestamp: now - 25 * 60 * 1000,
+            user: 'Encargado Puerto'
+          }
+        ]
+      },
+      {
+        id: 'cmo_4',
+        type: 'update',
+        priority: 'low',
+        title: 'Cambio de turno',
+        content: 'Cambio de turno CMO. Nuevo operador: Carlos Rodríguez. Extensión: 2345',
+        sender: 'Sistema CMO',
+        timestamp: now - 2 * 60 * 60 * 1000, // 2 horas atrás
+        read: true,
+        responses: []
+      }
+    ];
+  }
+
+  // Iniciar simulación de eventos en tiempo real (solo desarrollo)
+  startRealtimeSimulation() {
+    if (!CONFIG.IS_DEVELOPMENT) return;
+    
+    // Simular alertas por tiempo de espera cada 20 segundos
+    setInterval(() => {
+      const transitos = this.mockData?.[API_ENDPOINTS.TRANSITOS_PENDIENTES]?.data || [];
+      const transitosEsperando = transitos.filter(t => t.estado === 'esperando');
+      
+      if (transitosEsperando.length > 0) {
+        const randomTransito = transitosEsperando[Math.floor(Math.random() * transitosEsperando.length)];
+        const waitingTime = 35 + Math.floor(Math.random() * 30); // 35-65 minutos
+        
+        wsService.notifyListeners('auto_alert', {
+          type: 'long_wait',
+          severity: waitingTime > 60 ? 'critical' : 'warning',
+          title: waitingTime > 60 ? 'Tiempo de espera crítico' : 'Tiempo de espera prolongado',
+          message: `Tránsito ${randomTransito.matricula} lleva ${waitingTime} minutos esperando`,
+          transitId: randomTransito.id,
+          matricula: randomTransito.matricula,
+          waitingTime: waitingTime * 60000,
+          timestamp: Date.now(),
+          requiresAction: true,
+          suggestedActions: [
+            'Contactar al chofer',
+            'Verificar documentación',
+            waitingTime > 60 ? 'Priorizar tránsito' : 'Revisar estado'
+          ]
+        });
+      }
+    }, 20000);
+    
+    // Simular cambios de estado cada 30 segundos
+    setInterval(() => {
+      const transitos = this.mockData?.[API_ENDPOINTS.TRANSITOS_PENDIENTES]?.data || [];
+      if (transitos.length > 0) {
+        const randomTransito = transitos[Math.floor(Math.random() * transitos.length)];
+        const oldState = randomTransito.estado;
+        
+        // Simular transiciones de estado realistas
+        let newState;
+        switch (oldState) {
+          case 'esperando':
+            newState = Math.random() > 0.7 ? 'listo' : 'pasando_soga';
+            break;
+          case 'pasando_soga':
+            newState = 'listo';
+            break;
+          case 'listo':
+            newState = Math.random() > 0.8 ? 'precintando' : 'listo';
+            break;
+          case 'precintando':
+            newState = 'completado';
+            break;
+          default:
+            return;
+        }
+        
+        if (newState !== oldState) {
+          this.updateTransitoEstado(randomTransito.id, newState);
+        }
+      }
+    }, 30000);
+    
+    // Simular mensajes del CMO cada 45 segundos
+    setInterval(() => {
+      const transitos = this.mockData?.[API_ENDPOINTS.TRANSITOS_PENDIENTES]?.data || [];
+      if (transitos.length > 0 && Math.random() > 0.5) {
+        const randomTransito = transitos[Math.floor(Math.random() * transitos.length)];
+        const messages = [
+          {
+            type: 'correction',
+            priority: 'high',
+            title: 'Cambiar precinto',
+            content: `Cambiar precinto del ${randomTransito.tipo} ${randomTransito.matricula}. El actual está dañado.`,
+            showBanner: true
+          },
+          {
+            type: 'alert',
+            priority: 'high',
+            title: 'Corrección urgente',
+            content: `Verificar documentación del tránsito ${randomTransito.matricula} antes de proceder.`,
+            showBanner: true
+          },
+          {
+            type: 'instruction',
+            priority: 'normal',
+            title: 'Instrucción operativa',
+            content: `Priorizar tránsito ${randomTransito.matricula} - Destino: ${randomTransito.deposito}`,
+            showBanner: false
+          },
+          {
+            type: 'update',
+            priority: 'low',
+            title: 'Actualización',
+            content: `Cambio en procedimientos para ${randomTransito.tipo}. Consultar manual actualizado.`,
+            showBanner: false
+          }
+        ];
+        
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        
+        // Emitir mensaje del CMO
+        wsService.notifyListeners('cmo_message', {
+          id: `cmo_${Date.now()}`,
+          ...randomMessage,
+          transitId: randomTransito.matricula,
+          sender: `Operador CMO - ${['Juan Silva', 'María Pérez', 'Pedro Martínez'][Math.floor(Math.random() * 3)]}`,
+          timestamp: Date.now(),
+          read: false,
+          responses: []
+        });
+        
+        // También emitir como evento del DOM para el banner
+        window.dispatchEvent(new CustomEvent('cmo_message', {
+          detail: {
+            id: `cmo_${Date.now()}`,
+            ...randomMessage,
+            transitId: randomTransito.matricula,
+            sender: `Operador CMO`,
+            timestamp: Date.now()
+          }
+        }));
+      }
+    }, 45000);
+  }
 }
 
 // Instancia única del servicio
 const apiService = new ApiService();
+
+// Iniciar simulación en desarrollo
+if (CONFIG.IS_DEVELOPMENT) {
+  // Esperar un poco antes de iniciar la simulación
+  setTimeout(() => {
+    apiService.startRealtimeSimulation();
+    console.log('Simulación de eventos en tiempo real iniciada');
+  }, 3000);
+}
 
 // Exportar la instancia y la clase
 export { ApiService };

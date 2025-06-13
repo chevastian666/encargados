@@ -10,6 +10,15 @@ class WebSocketService {
     this.maxReconnectAttempts = 10;
     this.messageQueue = [];
     this.isConnected = false;
+    
+    // Para rastrear cambios y generar alertas
+    this.transitStates = new Map();
+    this.lastUpdate = new Map();
+    this.alertThresholds = {
+      waitingTime: 30 * 60 * 1000, // 30 minutos
+      delayTime: 15 * 60 * 1000,    // 15 minutos
+      criticalWaitTime: 60 * 60 * 1000 // 1 hora
+    };
   }
 
   connect() {
@@ -117,6 +126,18 @@ class WebSocketService {
       case 'auth_error':
         console.error('Error de autenticación WebSocket');
         this.notifyListeners('auth', { status: 'error', error: payload.error });
+        break;
+      
+      case 'transit_update':
+        this.handleTransitUpdate(payload);
+        break;
+      
+      case 'truck_position':
+        this.handleTruckPosition(payload);
+        break;
+        
+      case 'system_alert':
+        this.handleSystemAlert(payload);
         break;
       
       default:
@@ -256,6 +277,147 @@ class WebSocketService {
     return this.send('resolve_alert', { alertId, userId });
   }
 
+  // Manejar actualizaciones de tránsito
+  handleTransitUpdate(payload) {
+    const { transitId, newState, oldState, matricula, timestamp } = payload;
+    
+    // Guardar estado anterior
+    const previousState = this.transitStates.get(transitId);
+    this.transitStates.set(transitId, { state: newState, timestamp });
+    
+    // Generar alerta si hay cambio de estado
+    if (oldState && newState !== oldState) {
+      const alert = {
+        type: 'transit_state_change',
+        severity: this.getAlertSeverity(oldState, newState),
+        title: 'Cambio de estado de tránsito',
+        message: `Tránsito ${matricula} cambió de ${this.getStateLabel(oldState)} a ${this.getStateLabel(newState)}`,
+        transitId,
+        matricula,
+        oldState,
+        newState,
+        timestamp: Date.now(),
+        requiresAction: this.requiresAction(newState)
+      };
+      
+      this.notifyListeners('auto_alert', alert);
+    }
+    
+    // Verificar si lleva mucho tiempo esperando
+    if (newState === 'esperando') {
+      this.checkWaitingTime(transitId, matricula, timestamp);
+    }
+    
+    // Notificar actualización normal
+    this.notifyListeners('transit_update', payload);
+  }
+  
+  // Manejar posiciones de camiones
+  handleTruckPosition(payload) {
+    const { truckId, position, status, matricula } = payload;
+    const lastPos = this.lastUpdate.get(`truck_${truckId}`);
+    
+    // Detectar si el camión está detenido por mucho tiempo
+    if (lastPos && status === 'stopped') {
+      const stoppedTime = Date.now() - lastPos.timestamp;
+      
+      if (stoppedTime > this.alertThresholds.delayTime) {
+        const alert = {
+          type: 'truck_delayed',
+          severity: stoppedTime > this.alertThresholds.criticalWaitTime ? 'critical' : 'warning',
+          title: 'Camión detenido',
+          message: `Camión ${matricula} lleva ${Math.floor(stoppedTime / 60000)} minutos detenido`,
+          truckId,
+          matricula,
+          position,
+          stoppedTime,
+          timestamp: Date.now(),
+          requiresAction: true
+        };
+        
+        this.notifyListeners('auto_alert', alert);
+      }
+    }
+    
+    this.lastUpdate.set(`truck_${truckId}`, { position, status, timestamp: Date.now() });
+    this.notifyListeners('truck_position', payload);
+  }
+  
+  // Manejar alertas del sistema
+  handleSystemAlert(payload) {
+    const alert = {
+      ...payload,
+      timestamp: Date.now(),
+      source: 'system'
+    };
+    
+    this.notifyListeners('auto_alert', alert);
+  }
+  
+  // Verificar tiempo de espera
+  checkWaitingTime(transitId, matricula, timestamp) {
+    const waitStart = this.transitStates.get(transitId)?.waitStart || timestamp;
+    const waitingTime = Date.now() - waitStart;
+    
+    if (waitingTime > this.alertThresholds.criticalWaitTime) {
+      const alert = {
+        type: 'critical_wait',
+        severity: 'critical',
+        title: 'Tiempo de espera crítico',
+        message: `Tránsito ${matricula} lleva más de ${Math.floor(waitingTime / 3600000)} hora(s) esperando`,
+        transitId,
+        matricula,
+        waitingTime,
+        timestamp: Date.now(),
+        requiresAction: true,
+        suggestedActions: ['Contactar al chofer', 'Verificar documentación', 'Priorizar tránsito']
+      };
+      
+      this.notifyListeners('auto_alert', alert);
+    } else if (waitingTime > this.alertThresholds.waitingTime) {
+      const alert = {
+        type: 'long_wait',
+        severity: 'warning',
+        title: 'Tiempo de espera prolongado',
+        message: `Tránsito ${matricula} lleva ${Math.floor(waitingTime / 60000)} minutos esperando`,
+        transitId,
+        matricula,
+        waitingTime,
+        timestamp: Date.now(),
+        requiresAction: true
+      };
+      
+      this.notifyListeners('auto_alert', alert);
+    }
+  }
+  
+  // Obtener severidad de alerta según cambio de estado
+  getAlertSeverity(oldState, newState) {
+    if (newState === 'con_problema') return 'critical';
+    if (newState === 'completado') return 'info';
+    if (oldState === 'listo' && newState === 'esperando') return 'warning';
+    return 'info';
+  }
+  
+  // Obtener etiqueta de estado
+  getStateLabel(state) {
+    const labels = {
+      esperando: 'Esperando',
+      listo: 'Listo para precintar',
+      precintando: 'Precintando',
+      completado: 'Completado',
+      con_problema: 'Con problema',
+      no_sale_hoy: 'No sale hoy',
+      pasando_soga: 'Pasando soga'
+    };
+    return labels[state] || state;
+  }
+  
+  // Verificar si requiere acción
+  requiresAction(state) {
+    return ['con_problema', 'esperando', 'listo'].includes(state);
+  }
+  
   // Estado de conexión
   getConnectionStatus() {
     return {

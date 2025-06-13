@@ -1,6 +1,8 @@
 // Exportar todas las vistas
 export { default as Dashboard } from './Dashboard';
 export { default as DashboardFixed } from './DashboardFixed';
+export { default as DashboardClean } from './DashboardClean';
+export { default as DashboardCleanFixed } from './DashboardCleanFixed';
 export { default as TransitosPendientes } from './TransitosPendientes';
 export { default as Desprecintar } from './Desprecintar';
 export { default as Stock } from './Stock';

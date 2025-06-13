@@ -294,7 +294,7 @@ const DashboardFixed = ({ onModuleClick }) => {
         <div className="flex justify-between items-center">
           <div className="flex-1">
             <h1 className={`text-xl sm:text-2xl font-bold ${mainStyles.text.primary}`}>
-              Sistema de Precintado Aduanero
+              Panel Encargados Puerto Block Tracker
             </h1>
             <p className={`text-sm ${mainStyles.text.secondary}`}>
               Puerto de Montevideo

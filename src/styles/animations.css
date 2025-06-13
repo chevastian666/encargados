@@ -283,3 +283,80 @@
   background-repeat: no-repeat;
   animation: skeleton-loading 1.2s ease-in-out infinite;
 }
+
+/* Success check animation */
+@keyframes success-check {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.animate-success-check {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: success-check 0.8s ease-out forwards;
+}
+
+/* State change pulse */
+@keyframes state-change-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-state-change {
+  animation: state-change-pulse 0.6s ease-out;
+}
+
+/* Card highlight */
+@keyframes card-highlight {
+  0% {
+    background-color: rgba(34, 197, 94, 0);
+    border-color: currentColor;
+  }
+  50% {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-color: rgb(34, 197, 94);
+  }
+  100% {
+    background-color: rgba(34, 197, 94, 0);
+    border-color: currentColor;
+  }
+}
+
+.animate-card-highlight {
+  animation: card-highlight 1s ease-out;
+}
+
+/* Zoom in and fade */
+@keyframes zoom-in-fade {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-zoom-in-fade {
+  animation: zoom-in-fade 0.4s ease-out;
+}

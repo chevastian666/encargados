@@ -116,6 +116,16 @@ export const useDashboardStats = (pollingInterval = 30000) => {
     refetch();
   }, [refetch]);
 
+  // Función para actualizar estadísticas localmente
+  const updateStats = useCallback((updater) => {
+    setStats(prevStats => {
+      if (typeof updater === 'function') {
+        return updater(prevStats);
+      }
+      return updater;
+    });
+  }, []);
+
   // Función para obtener el color de una métrica según su rendimiento
   const getMetricColor = useCallback((metric, value, isReverse = false) => {
     const thresholds = {
@@ -146,6 +156,7 @@ export const useDashboardStats = (pollingInterval = 30000) => {
     loading: statsLoading,
     error: statsError,
     refreshStats,
+    updateStats,
     getMetricColor
   };
 };
