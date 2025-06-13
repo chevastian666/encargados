@@ -20,3 +20,4 @@ export { default as TransitCMOMessages } from './TransitCMOMessages';
 export { default as VehicleAutocomplete } from './VehicleAutocomplete';
 export { default as DriverAutocomplete } from './DriverAutocomplete';
 export { default as EnhancedTransitForm } from './EnhancedTransitForm';
+export { default as OperationalStats } from './OperationalStats';

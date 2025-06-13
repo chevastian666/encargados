@@ -8,6 +8,7 @@ import { useDarkMode, useDashboardStats, useNotification, useRealtimeUpdates } f
 import { ConnectionStatus } from '../common';
 import AutomaticAlerts from '../common/AutomaticAlerts';
 import CMOCommunication from '../common/CMOCommunication';
+import OperationalStats from '../common/OperationalStats';
 
 /**
  * Dashboard con diseño limpio y minimalista
@@ -289,6 +290,9 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
       
       {/* Módulo de comunicación con CMO */}
       <CMOCommunication darkMode={darkMode} position="bottom-right" />
+      
+      {/* Estadísticas operativas en tiempo real */}
+      <OperationalStats darkMode={darkMode} position="floating" compact={true} />
     </div>
   );
 };

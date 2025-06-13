@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Package, Truck, Globe, Clock, CheckCircle,
-  AlertCircle, FileText, Camera, Flag,
-  Building, User, Hash, Calendar, MapPin,
-  ScanLine, RefreshCw, Filter, Search, X
+  FileText, Flag, Building, User, Hash, 
+  MapPin, RefreshCw, Filter, Search, X
 } from 'lucide-react';
 import TabletModal from '../common/TabletModal';
 import TabletButton from '../common/TabletButton';
@@ -12,16 +11,14 @@ import apiService from '../../services/api.service';
 
 /**
  * Modal de Por Desprecintar optimizado para tablet
- * - Verificación rápida de precintos
- * - Captura de fotos integrada
- * - Proceso paso a paso
+ * - Vista informativa de tránsitos listos para desprecintar
+ * - Muestra ubicación y estado de cada vehículo
+ * - Sin acciones de desprecintado (proceso automático)
  */
 const DesprecintarTablet = ({ isOpen, onClose, darkMode }) => {
   const [selectedCamion, setSelectedCamion] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
-  const [procesando, setProcesando] = useState(false);
-  const [pasoActual, setPasoActual] = useState(1);
   const { showNotification } = useNotification();
 
   // Cargar camiones por desprecintar
@@ -71,31 +68,8 @@ const DesprecintarTablet = ({ isOpen, onClose, darkMode }) => {
     }
   };
 
-  // Proceso de desprecintado
-  const ProcesoDesprecintar = ({ camion }) => {
-    const pasos = [
-      { id: 1, titulo: 'Verificar Datos', icon: FileText },
-      { id: 2, titulo: 'Escanear Precinto', icon: ScanLine },
-      { id: 3, titulo: 'Capturar Evidencia', icon: Camera },
-      { id: 4, titulo: 'Confirmar Retiro', icon: CheckCircle }
-    ];
-
-    const handleProcesar = async () => {
-      setProcesando(true);
-      // Simular proceso
-      setTimeout(() => {
-        if (pasoActual < 4) {
-          setPasoActual(pasoActual + 1);
-        } else {
-          showNotification('Precinto retirado correctamente', 'success');
-          setSelectedCamion(null);
-          setPasoActual(1);
-          refetch();
-        }
-        setProcesando(false);
-      }, 1000);
-    };
-
+  // Vista de detalles del camión (solo informativo)
+  const DetallesCamion = ({ camion }) => {
     return (
       <div className={`
         ${darkMode ? 'bg-gray-800' : 'bg-white'}
@@ -104,193 +78,146 @@ const DesprecintarTablet = ({ isOpen, onClose, darkMode }) => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Proceso de Desprecintado
+            Detalles del Tránsito
           </h3>
           <button
-            onClick={() => {
-              setSelectedCamion(null);
-              setPasoActual(1);
-            }}
+            onClick={() => setSelectedCamion(null)}
             className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Información del camión */}
+        {/* Información principal */}
         <div className={`
-          p-4 rounded-lg
+          p-6 rounded-lg
           ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}
         `}>
-          <div className="flex items-center space-x-3 mb-3">
-            <Truck className="w-6 h-6 text-blue-500" />
-            <span className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              {camion.matricula}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="flex items-center space-x-4 mb-6">
+            <Truck className="w-10 h-10 text-blue-500" />
             <div>
-              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Origen:</span>
-              <span className={`ml-2 font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {camion.origen}
-              </span>
-            </div>
-            <div>
-              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Precinto:</span>
-              <span className={`ml-2 font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {camion.precinto}
-              </span>
+              <h4 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                {camion.matricula}
+              </h4>
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {camion.estado}
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* Pasos del proceso */}
-        <div className="flex items-center justify-between mb-6">
-          {pasos.map((paso, index) => {
-            const Icon = paso.icon;
-            const isActive = paso.id === pasoActual;
-            const isCompleted = paso.id < pasoActual;
-            
-            return (
-              <React.Fragment key={paso.id}>
-                <div className="flex flex-col items-center">
-                  <div className={`
-                    w-12 h-12 rounded-full flex items-center justify-center
-                    ${isCompleted 
-                      ? 'bg-green-500 text-white'
-                      : isActive
-                        ? 'bg-blue-500 text-white'
-                        : darkMode
-                          ? 'bg-gray-700 text-gray-400'
-                          : 'bg-gray-200 text-gray-600'
-                    }
-                  `}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <span className={`
-                    text-xs mt-2 text-center
-                    ${isActive || isCompleted
-                      ? darkMode ? 'text-white' : 'text-gray-900'
-                      : darkMode ? 'text-gray-500' : 'text-gray-500'
-                    }
-                  `}>
-                    {paso.titulo}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Columna izquierda */}
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <Globe className="w-4 h-4 text-gray-400" />
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Origen
                   </span>
                 </div>
-                {index < pasos.length - 1 && (
-                  <div className={`
-                    flex-1 h-1 mx-2
-                    ${isCompleted
-                      ? 'bg-green-500'
-                      : darkMode ? 'bg-gray-700' : 'bg-gray-300'
-                    }
-                  `} />
-                )}
-              </React.Fragment>
-            );
-          })}
+                <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {camion.origen}
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Destino
+                  </span>
+                </div>
+                <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {camion.destino}
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Llegada
+                  </span>
+                </div>
+                <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {camion.llegada}
+                </p>
+              </div>
+            </div>
+
+            {/* Columna derecha */}
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <Building className="w-4 h-4 text-gray-400" />
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Empresa
+                  </span>
+                </div>
+                <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {camion.empresa}
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Chofer
+                  </span>
+                </div>
+                <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {camion.chofer}
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <Package className="w-4 h-4 text-gray-400" />
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Carga
+                  </span>
+                </div>
+                <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {camion.carga}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Contenido del paso actual */}
+        {/* Información del precinto */}
         <div className={`
-          p-6 rounded-lg border-2 border-dashed
-          ${darkMode ? 'border-gray-700' : 'border-gray-300'}
-          min-h-[200px]
+          p-4 rounded-lg border-2
+          ${darkMode ? 'border-blue-800 bg-blue-900/20' : 'border-blue-200 bg-blue-50'}
         `}>
-          {pasoActual === 1 && (
-            <div className="space-y-4">
-              <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Verificar Información del Tránsito
-              </h4>
-              <div className="space-y-2">
-                <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
-                  • Matrícula: {camion.matricula}
-                </p>
-                <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
-                  • Empresa: {camion.empresa}
-                </p>
-                <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
-                  • Chofer: {camion.chofer}
-                </p>
-                <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
-                  • Carga: {camion.carga}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {pasoActual === 2 && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <ScanLine className="w-16 h-16 text-blue-500 mb-4 animate-pulse" />
-              <p className={`text-center ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Escanea el código del precinto
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`text-sm ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+                Precinto
               </p>
-              <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Precinto esperado: {camion.precinto}
+              <p className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                {camion.precinto}
               </p>
             </div>
-          )}
-
-          {pasoActual === 3 && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <Camera className="w-16 h-16 text-blue-500 mb-4" />
-              <p className={`text-center ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Captura foto del precinto antes de retirarlo
-              </p>
-              <TabletButton
-                onClick={() => showNotification('Abriendo cámara...', 'info')}
-                variant="primary"
-                size="medium"
-                darkMode={darkMode}
-                icon={<Camera className="w-5 h-5" />}
-                className="mt-4"
-              >
-                Tomar Foto
-              </TabletButton>
-            </div>
-          )}
-
-          {pasoActual === 4 && (
-            <div className="space-y-4">
-              <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Confirmar Retiro del Precinto
-              </h4>
-              <div className={`
-                p-3 rounded-lg
-                ${darkMode ? 'bg-yellow-900/30' : 'bg-yellow-50'}
-              `}>
-                <p className={`text-sm ${darkMode ? 'text-yellow-400' : 'text-yellow-800'}`}>
-                  ⚠️ Al confirmar, se registrará el retiro del precinto y se habilitará el camión para salir.
-                </p>
-              </div>
-            </div>
-          )}
+            <Hash className={`w-8 h-8 ${darkMode ? 'text-blue-500' : 'text-blue-600'}`} />
+          </div>
         </div>
 
-        {/* Botones de acción */}
-        <div className="flex space-x-2">
-          {pasoActual > 1 && (
-            <TabletButton
-              onClick={() => setPasoActual(pasoActual - 1)}
-              variant="secondary"
-              size="medium"
-              darkMode={darkMode}
-              disabled={procesando}
-            >
-              Anterior
-            </TabletButton>
-          )}
-          <TabletButton
-            onClick={handleProcesar}
-            variant="primary"
-            size="medium"
-            fullWidth
-            darkMode={darkMode}
-            loading={procesando}
-            icon={pasoActual === 4 ? <CheckCircle className="w-5 h-5" /> : null}
-          >
-            {pasoActual === 4 ? 'Confirmar Retiro' : 'Siguiente'}
-          </TabletButton>
+        {/* Estado e información adicional */}
+        <div className={`
+          p-4 rounded-lg
+          ${darkMode ? 'bg-green-900/30' : 'bg-green-50'}
+        `}>
+          <div className="flex items-center space-x-2">
+            <CheckCircle className="w-5 h-5 text-green-500" />
+            <p className={`${darkMode ? 'text-green-400' : 'text-green-800'}`}>
+              Este tránsito está listo para ser desprecintado
+            </p>
+          </div>
+          <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            El desprecintado se realizará automáticamente cuando el vehículo llegue al punto de control
+          </p>
         </div>
       </div>
     );
@@ -387,25 +314,16 @@ const DesprecintarTablet = ({ isOpen, onClose, darkMode }) => {
             </div>
           </div>
 
-          {/* Acciones */}
-          <div className="flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-2 pt-4 lg:pt-0">
+          {/* Acción de ver detalles */}
+          <div className="flex pt-4 lg:pt-0">
             <TabletButton
               onClick={() => setSelectedCamion(camion)}
               variant="primary"
               size="medium"
               darkMode={darkMode}
-              icon={<Package className="w-5 h-5" />}
-            >
-              Desprecintar
-            </TabletButton>
-            <TabletButton
-              onClick={() => showNotification('Ver detalles completos', 'info')}
-              variant="secondary"
-              size="medium"
-              darkMode={darkMode}
               icon={<FileText className="w-5 h-5" />}
             >
-              Detalles
+              Ver Detalles
             </TabletButton>
           </div>
         </div>
@@ -536,19 +454,16 @@ const DesprecintarTablet = ({ isOpen, onClose, darkMode }) => {
         )}
       </TabletModal>
 
-      {/* Modal de proceso de desprecintado */}
+      {/* Modal de detalles del camión */}
       {selectedCamion && (
         <TabletModal
           isOpen={true}
-          onClose={() => {
-            setSelectedCamion(null);
-            setPasoActual(1);
-          }}
+          onClose={() => setSelectedCamion(null)}
           title=""
           darkMode={darkMode}
           showMaximize={false}
         >
-          <ProcesoDesprecintar camion={selectedCamion} />
+          <DetallesCamion camion={selectedCamion} />
         </TabletModal>
       )}
     </>

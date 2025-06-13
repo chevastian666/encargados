@@ -710,6 +710,14 @@ async checkImageSupport() {
           }
         });
         
+        // Si se completó un precintado, actualizar estadísticas
+        if (nuevoEstado === 'completado' && oldState === 'precintando') {
+          // Importar dinámicamente para evitar dependencias circulares
+          import('./statistics.service.js').then(module => {
+            module.default.incrementPrecintados();
+          });
+        }
+        
         // Generar alertas automáticas según el cambio de estado
         if (nuevoEstado === 'con_problema') {
           wsService.notifyListeners('auto_alert', {
