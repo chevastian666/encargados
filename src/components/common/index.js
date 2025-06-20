@@ -1,0 +1,23 @@
+// Exportar todos los componentes comunes
+export { default as Modal } from './Modal';
+export { default as SidePanel } from './SidePanel';
+export { default as Tooltip } from './Tooltip';
+export { default as SearchBar } from './SearchBar';
+export { default as FilterPanel } from './FilterPanel';
+export { default as EditableInput } from './EditableInput';
+export { default as ConnectionStatus } from './ConnectionStatus';
+export { default as MiniChart } from './MiniChart';
+export { default as CommandCenter } from './CommandCenter';
+export { default as TabletModal } from './TabletModal';
+export { default as TabletButton } from './TabletButton';
+export { default as ConfirmDialog } from './ConfirmDialog';
+export { default as SuccessAnimation } from './SuccessAnimation';
+export { default as AutomaticAlerts } from './AutomaticAlerts';
+export { default as QuickStatusChange } from './QuickStatusChange';
+export { default as CMOCommunication } from './CMOCommunication';
+export { default as CMOBanner } from './CMOBanner';
+export { default as TransitCMOMessages } from './TransitCMOMessages';
+export { default as VehicleAutocomplete } from './VehicleAutocomplete';
+export { default as DriverAutocomplete } from './DriverAutocomplete';
+export { default as EnhancedTransitForm } from './EnhancedTransitForm';
+export { default as OperationalStats } from './OperationalStats';
