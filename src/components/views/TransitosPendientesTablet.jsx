@@ -1039,8 +1039,8 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
         </div>
       </div>
 
-      {/* Lista de tránsitos */}
-      <div className="space-y-4">
+      {/* Lista de tránsitos con scroll container */}
+      <div className="overflow-y-auto max-h-[70vh] -mx-6 px-6">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -1064,25 +1064,25 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
           </div>
         ) : (
           <>
-            {/* Vista Normal - Cards completas */}
+            {/* Vista Normal - Cards completas con grid responsivo */}
             {vistaActual === 'normal' && (
-              <div className="space-y-4">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                 {transitosTableroActivo.map((transito) => (
                   <TransitoCard key={transito.id} transito={transito} />
                 ))}
               </div>
             )}
             
-            {/* Vista Miniatura - Grid de cards pequeñas */}
+            {/* Vista Miniatura - Grid responsivo para tablets */}
             {vistaActual === 'miniatura' && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 tablet-portrait:grid-cols-2 tablet-landscape:grid-cols-3">
                 {transitosTableroActivo.map((transito) => (
                   <TransitoMiniatura key={transito.id} transito={transito} />
                 ))}
               </div>
             )}
             
-            {/* Vista Compacta - Lista simplificada */}
+            {/* Vista Compacta - Lista con scroll */}
             {vistaActual === 'compacta' && (
               <div className="space-y-2">
                 {transitosTableroActivo.map((transito) => (

@@ -5,6 +5,9 @@
 /* Import touch-optimized utilities */
 @import './styles/touch-utilities.css';
 
+/* Import responsive grid system */
+@import './styles/responsive-grid.css';
+
 body {
   @apply m-0 font-sans;
 }

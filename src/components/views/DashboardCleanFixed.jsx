@@ -269,7 +269,7 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
             <h2 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wider tablet-portrait:text-base tablet-landscape:text-sm tablet-portrait:mb-6 tablet-landscape:mb-4">
               Información Crítica
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 tablet-portrait:gap-3 tablet-landscape:gap-2 tablet-portrait:grid-cols-1 tablet-landscape:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-2 tablet-portrait:grid-cols-1 tablet-landscape:grid-cols-2">
               {criticalModules.map(module => (
                 <CriticalCard key={module.id} module={module} />
               ))}
@@ -283,7 +283,7 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
               <h2 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wider tablet-portrait:text-base tablet-landscape:text-sm tablet-portrait:mb-6 tablet-landscape:mb-4">
                 Acciones Rápidas
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 tablet-portrait:grid-cols-1 tablet-portrait:gap-4 tablet-landscape:grid-cols-3 tablet-landscape:gap-3">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 tablet-portrait:grid-cols-1 tablet-landscape:grid-cols-3">
                 {secondaryModules.map(module => (
                   <SecondaryCard key={module.id} module={module} />
                 ))}
