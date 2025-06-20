@@ -24,3 +24,5 @@ export { default as DriverAutocomplete } from './DriverAutocomplete';
 export { default as EnhancedTransitForm } from './EnhancedTransitForm';
 export { default as OperationalStats } from './OperationalStats';
 export { default as ResponsiveTable } from './ResponsiveTable';
+export { default as ThemeSelector } from './ThemeSelector';
+export { default as ThemeEditor } from './ThemeEditor';

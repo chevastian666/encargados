@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ConnectionProvider } from './contexts/ConnectionContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { 
   Dashboard, 
   DashboardFixed,
@@ -70,8 +71,9 @@ const App = () => {
   };
 
   return (
-    <ConnectionProvider>
-      <NotificationProvider>
+    <ThemeProvider>
+      <ConnectionProvider>
+        <NotificationProvider>
         {/* Banner de notificaciones destacadas del CMO */}
         <CMOBanner darkMode={true} onMessageClick={(message) => {
           // Abrir el módulo de comunicación del CMO cuando se hace clic en un mensaje
@@ -117,8 +119,9 @@ const App = () => {
           onClose={() => handleCloseModal('camiones')} 
           darkMode={true} 
         />
-      </NotificationProvider>
-    </ConnectionProvider>
+        </NotificationProvider>
+      </ConnectionProvider>
+    </ThemeProvider>
   );
 };
 

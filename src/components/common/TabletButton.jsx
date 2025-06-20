@@ -18,6 +18,7 @@ const TabletButton = ({
   fullWidth = false,
   className = '',
   darkMode = false,
+  as = 'button',
   ...props
 }) => {
   // Tamaños optimizados para tablet - garantizando mínimo 48px
@@ -60,8 +61,10 @@ const TabletButton = ({
     return variants[variant] || variants.primary;
   };
 
+  const Component = as;
+  
   return (
-    <button
+    <Component
       onClick={onClick}
       disabled={disabled || loading}
       className={`
@@ -114,7 +117,7 @@ const TabletButton = ({
           )}
         </>
       )}
-    </button>
+    </Component>
   );
 };
 

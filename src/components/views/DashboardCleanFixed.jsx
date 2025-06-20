@@ -5,20 +5,22 @@ import {
   TrendingUp, TrendingDown, Activity
 } from 'lucide-react';
 import { useDarkMode, useDashboardStats, useNotification, useRealtimeUpdates } from '../../hooks';
-import { ConnectionStatus } from '../common';
+import { ConnectionStatus, ThemeSelector, ThemeEditor } from '../common';
 import AutomaticAlerts from '../common/AutomaticAlerts';
 import CMOCommunication from '../common/CMOCommunication';
 import OperationalStats from '../common/OperationalStats';
+import { useTheme } from '../../contexts/ThemeContext';
 
 /**
  * Dashboard con diseño limpio y minimalista
  * Prioriza información crítica sin saturar la interfaz
  */
 const DashboardCleanFixed = ({ onModuleClick }) => {
-  const [darkMode, setDarkMode, toggleDarkMode] = useDarkMode(true);
+  const { isDark } = useTheme();
   const { stats, loading, refreshStats, updateStats } = useDashboardStats();
   const { showNotification } = useNotification();
   const [activeModule, setActiveModule] = useState(null);
+  const darkMode = isDark; // Compatibilidad con código existente
   
   // Configurar actualizaciones en tiempo real
   const { connected } = useRealtimeUpdates({
@@ -247,16 +249,7 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
               <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''} text-gray-600 dark:text-gray-400 tablet-portrait:w-6 tablet-portrait:h-6 tablet-landscape:w-5 tablet-landscape:h-5`} />
             </button>
             
-            <button
-              onClick={toggleDarkMode}
-              className="min-h-[48px] min-w-[48px] p-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transform active:scale-95 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 tablet-portrait:p-4 tablet-landscape:p-3"
-              aria-label={darkMode ? "Modo claro" : "Modo oscuro"}
-            >
-              {darkMode ? 
-                <Sun className="w-5 h-5 text-yellow-400 tablet-portrait:w-6 tablet-portrait:h-6 tablet-landscape:w-5 tablet-landscape:h-5" /> : 
-                <Moon className="w-5 h-5 text-gray-600 dark:text-gray-400 tablet-portrait:w-6 tablet-portrait:h-6 tablet-landscape:w-5 tablet-landscape:h-5" />
-              }
-            </button>
+            <ThemeSelector className="tablet-portrait:scale-110 tablet-landscape:scale-100" />
           </div>
         </div>
       </header>
@@ -309,6 +302,9 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
       
       {/* Estadísticas operativas en tiempo real */}
       <OperationalStats darkMode={darkMode} position="floating" compact={true} />
+      
+      {/* Editor de temas */}
+      <ThemeEditor />
     </div>
   );
 };
