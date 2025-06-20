@@ -32,6 +32,11 @@ export default {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
+      colors: {
+        gray: {
+          750: '#2d3748', // Custom gray between 700 and 800
+        },
+      },
       spacing: {
         'touch': '48px', // Minimum touch target size
         'touch-lg': '56px', // Large touch target

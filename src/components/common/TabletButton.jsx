@@ -68,18 +68,19 @@ const TabletButton = ({
         ${sizeClasses[size]}
         ${getVariantClasses()}
         ${fullWidth ? 'w-full' : ''}
-        inline-flex items-center justify-center
+        min-h-[48px] min-w-[48px] p-3
+        inline-flex items-center justify-center gap-2
         font-medium rounded-lg
         transition-all duration-200
         transform active:scale-95 hover:scale-[1.02]
         focus:outline-none focus:ring-2 focus:ring-offset-2
-        ${variant === 'primary' && 'focus:ring-blue-500'}
-        ${variant === 'secondary' && 'focus:ring-gray-500'}
-        ${variant === 'danger' && 'focus:ring-red-500'}
-        ${variant === 'success' && 'focus:ring-green-500'}
-        ${variant === 'warning' && 'focus:ring-yellow-500'}
-        touch-button tablet-button
+        ${variant === 'primary' && 'focus:ring-blue-500 hover:shadow-lg active:shadow-sm'}
+        ${variant === 'secondary' && 'focus:ring-gray-500 hover:shadow-md active:shadow-sm'}
+        ${variant === 'danger' && 'focus:ring-red-500 hover:shadow-lg active:shadow-sm'}
+        ${variant === 'success' && 'focus:ring-green-500 hover:shadow-lg active:shadow-sm'}
+        ${variant === 'warning' && 'focus:ring-yellow-500 hover:shadow-lg active:shadow-sm'}
         select-none cursor-pointer
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none
         tablet-portrait:rounded-xl tablet-landscape:rounded-lg
         ${className}
       `}

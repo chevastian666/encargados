@@ -10,6 +10,8 @@ export { default as MiniChart } from './MiniChart';
 export { default as CommandCenter } from './CommandCenter';
 export { default as TabletModal } from './TabletModal';
 export { default as TabletButton } from './TabletButton';
+export { default as TouchInput } from './TouchInput';
+export { default as TouchSelect } from './TouchSelect';
 export { default as ConfirmDialog } from './ConfirmDialog';
 export { default as SuccessAnimation } from './SuccessAnimation';
 export { default as AutomaticAlerts } from './AutomaticAlerts';

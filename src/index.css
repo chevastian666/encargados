@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import touch-optimized utilities */
+@import './styles/touch-utilities.css';
+
 body {
   @apply m-0 font-sans;
 }

@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Base touch-optimized button */
+  .touch-btn {
+    @apply min-h-[48px] min-w-[48px] p-3 
+           inline-flex items-center justify-center
+           font-medium rounded-lg
+           transition-all duration-200
+           transform active:scale-95 hover:scale-[1.02]
+           focus:outline-none focus:ring-2 focus:ring-offset-2
+           select-none cursor-pointer
+           space-x-2;
+  }
+  
+  /* Touch button sizes */
+  .touch-btn-sm {
+    @apply touch-btn text-sm px-4 py-3;
+  }
+  
+  .touch-btn-md {
+    @apply touch-btn text-base px-6 py-3;
+  }
+  
+  .touch-btn-lg {
+    @apply touch-btn text-lg px-8 py-4 min-h-[56px];
+  }
+  
+  /* Touch button variants with enhanced states */
+  .touch-btn-primary {
+    @apply touch-btn
+           bg-blue-500 hover:bg-blue-600 active:bg-blue-700
+           text-white
+           focus:ring-blue-500
+           hover:shadow-lg active:shadow-sm;
+  }
+  
+  .touch-btn-secondary {
+    @apply touch-btn
+           bg-gray-200 hover:bg-gray-300 active:bg-gray-400
+           dark:bg-gray-700 dark:hover:bg-gray-600 dark:active:bg-gray-800
+           text-gray-700 dark:text-gray-200
+           focus:ring-gray-500
+           hover:shadow-md active:shadow-sm;
+  }
+  
+  .touch-btn-danger {
+    @apply touch-btn
+           bg-red-500 hover:bg-red-600 active:bg-red-700
+           text-white
+           focus:ring-red-500
+           hover:shadow-lg active:shadow-sm;
+  }
+  
+  .touch-btn-success {
+    @apply touch-btn
+           bg-green-500 hover:bg-green-600 active:bg-green-700
+           text-white
+           focus:ring-green-500
+           hover:shadow-lg active:shadow-sm;
+  }
+  
+  /* Touch-optimized input fields */
+  .touch-input {
+    @apply min-h-[48px] px-4 py-3
+           text-base
+           rounded-lg border
+           border-gray-300 dark:border-gray-600
+           bg-white dark:bg-gray-700
+           focus:outline-none focus:ring-2 focus:ring-blue-500
+           transition-all duration-200
+           placeholder:text-gray-400 dark:placeholder:text-gray-500;
+  }
+  
+  /* Touch-optimized select */
+  .touch-select {
+    @apply touch-input pr-10 appearance-none
+           bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg%20xmlns%3d%22http%3a%2f%2fwww.w3.org%2f2000%2fsvg%22%20width%3d%2212%22%20height%3d%2212%22%20viewBox%3d%220%200%2012%2012%22%3e%3cpath%20fill%3d%22%23333%22%20d%3d%22M10.293%203.293L6%207.586%201.707%203.293A1%201%200%2000.293%204.707l5%205a1%201%200%20001.414%200l5-5a1%201%200%2010-1.414-1.414z%22%2f%3e%3c%2fsvg%3e')]
+           bg-[length:12px] bg-[right_16px_center] bg-no-repeat;
+  }
+  
+  /* Touch-optimized checkbox/radio */
+  .touch-checkbox,
+  .touch-radio {
+    @apply w-6 h-6 min-w-[24px] min-h-[24px]
+           text-blue-500
+           border-2 border-gray-300 dark:border-gray-600
+           focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+           transition-all duration-200
+           cursor-pointer;
+  }
+  
+  /* Touch-optimized card */
+  .touch-card {
+    @apply p-4 rounded-xl
+           bg-white dark:bg-gray-800
+           border border-gray-200 dark:border-gray-700
+           transition-all duration-200
+           hover:shadow-lg active:scale-[0.99]
+           cursor-pointer;
+  }
+  
+  /* Touch-optimized list item */
+  .touch-list-item {
+    @apply min-h-[56px] px-4 py-3
+           flex items-center
+           border-b border-gray-200 dark:border-gray-700
+           transition-all duration-200
+           hover:bg-gray-50 dark:hover:bg-gray-800
+           active:bg-gray-100 dark:active:bg-gray-700
+           cursor-pointer;
+  }
+  
+  /* Spacing utilities for touch interfaces */
+  .touch-spacing {
+    @apply space-y-2;
+  }
+  
+  .touch-spacing-lg {
+    @apply space-y-3;
+  }
+  
+  .touch-gap {
+    @apply gap-2;
+  }
+  
+  .touch-gap-lg {
+    @apply gap-3;
+  }
+  
+  /* Icon button for touch */
+  .touch-icon-btn {
+    @apply min-h-[48px] min-w-[48px] p-3
+           inline-flex items-center justify-center
+           rounded-lg
+           transition-all duration-200
+           transform active:scale-95 hover:scale-[1.02]
+           focus:outline-none focus:ring-2 focus:ring-offset-2
+           hover:bg-gray-100 dark:hover:bg-gray-700
+           active:bg-gray-200 dark:active:bg-gray-600;
+  }
+  
+  /* Touch feedback animation */
+  @keyframes touch-feedback {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+  
+  .touch-feedback {
+    animation: touch-feedback 0.2s ease-out;
+  }
+}
+
+@layer utilities {
+  /* Minimum touch target utilities */
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
+  
+  .touch-target-sm {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .touch-target-lg {
+    @apply min-h-[56px] min-w-[56px];
+  }
+  
+  /* Touch padding utilities */
+  .touch-padding {
+    @apply p-3;
+  }
+  
+  .touch-padding-x {
+    @apply px-4;
+  }
+  
+  .touch-padding-y {
+    @apply py-3;
+  }
+  
+  /* Enhanced active states */
+  .touch-active {
+    @apply active:scale-95 active:opacity-90;
+  }
+  
+  /* Disabled state for touch elements */
+  .touch-disabled {
+    @apply opacity-50 cursor-not-allowed pointer-events-none;
+  }
+}

@@ -93,7 +93,7 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
     }
   ];
 
-  // Card de módulo crítico optimizada para tablet
+  // Card de módulo crítico con táctil optimizado
   const CriticalCard = ({ module }) => (
     <button
       onClick={() => onModuleClick(module.id)}
@@ -104,10 +104,12 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
         tablet-portrait:p-8 tablet-landscape:p-6
         tablet-portrait:rounded-2xl tablet-landscape:rounded-xl
         bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700
-        ${activeModule === module.id ? 'scale-105 shadow-xl' : 'hover:shadow-lg'}
+        ${activeModule === module.id ? 'scale-[1.02] shadow-2xl' : 'hover:shadow-xl'}
         ${module.id === 'alertas' && module.value > 0 ? 'animate-pulse' : ''}
-        min-h-touch-xl tablet-portrait:min-h-[120px] tablet-landscape:min-h-touch-xl
-        touch-button tablet-card
+        min-h-[80px] tablet-portrait:min-h-[120px] tablet-landscape:min-h-[80px]
+        transform active:scale-[0.98] hover:scale-[1.01]
+        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+        select-none cursor-pointer
       `}
     >
       {/* Indicador de prioridad */}
@@ -141,10 +143,10 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
         </div>
       </div>
       
-      {/* Acción rápida */}
-      <div className="mt-4 flex items-center text-sm text-gray-600 dark:text-gray-400">
+      {/* Acción rápida con área táctil expandida */}
+      <div className="mt-4 -m-2 p-2 flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
         <span>Ver detalles</span>
-        <ChevronRight className="w-4 h-4 ml-1" />
+        <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
       </div>
     </button>
   );
@@ -224,19 +226,21 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
             </p>
           </div>
           
-          <div className="flex items-center space-x-4 tablet-portrait:space-x-5 tablet-landscape:space-x-4">
+          <div className="flex items-center gap-2 tablet-portrait:gap-3 tablet-landscape:gap-2">
             <ConnectionStatus darkMode={darkMode} />
             
             <button
               onClick={refreshStats}
               disabled={loading}
               className={`
-                p-2 rounded-lg transition-all duration-200
-                tablet-portrait:p-3 tablet-landscape:p-2
-                min-h-touch min-w-touch
+                min-h-[48px] min-w-[48px] p-3
+                rounded-lg transition-all duration-200
                 hover:bg-gray-100 dark:hover:bg-gray-700
-                ${loading ? 'opacity-50 cursor-not-allowed' : ''}
-                touch-button active:scale-95
+                active:bg-gray-200 dark:active:bg-gray-600
+                transform active:scale-95 hover:scale-[1.02]
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500
+                ${loading ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
+                tablet-portrait:p-4 tablet-landscape:p-3
               `}
               aria-label="Actualizar datos"
             >
@@ -245,7 +249,7 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
             
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 tablet-portrait:p-3 tablet-landscape:p-2 min-h-touch min-w-touch touch-button active:scale-95"
+              className="min-h-[48px] min-w-[48px] p-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transform active:scale-95 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 tablet-portrait:p-4 tablet-landscape:p-3"
               aria-label={darkMode ? "Modo claro" : "Modo oscuro"}
             >
               {darkMode ? 
@@ -265,7 +269,7 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
             <h2 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wider tablet-portrait:text-base tablet-landscape:text-sm tablet-portrait:mb-6 tablet-landscape:mb-4">
               Información Crítica
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 tablet-portrait:gap-6 tablet-landscape:gap-4 tablet-portrait:grid-cols-1 tablet-landscape:grid-cols-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 tablet-portrait:gap-3 tablet-landscape:gap-2 tablet-portrait:grid-cols-1 tablet-landscape:grid-cols-2">
               {criticalModules.map(module => (
                 <CriticalCard key={module.id} module={module} />
               ))}

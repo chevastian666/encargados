@@ -82,9 +82,18 @@ const DesprecintarTablet = ({ isOpen, onClose, darkMode }) => {
           </h3>
           <button
             onClick={() => setSelectedCamion(null)}
-            className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+            className={`
+              p-3 rounded-lg min-w-[48px] min-h-[48px]
+              flex items-center justify-center
+              ${darkMode 
+                ? 'hover:bg-gray-700 active:bg-gray-600' 
+                : 'hover:bg-gray-100 active:bg-gray-200'
+              }
+              transition-colors duration-150
+              touch-manipulation
+            `}
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -367,13 +376,15 @@ const DesprecintarTablet = ({ isOpen, onClose, darkMode }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`
-                w-full pl-10 pr-4 py-3 rounded-lg border
+                w-full pl-12 pr-4 py-4 rounded-lg border
+                min-h-[48px] text-base font-medium
                 ${darkMode 
-                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500 hover:bg-gray-750 active:bg-gray-700' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 hover:bg-gray-50 active:bg-gray-100'
                 }
-                focus:outline-none focus:ring-2 focus:ring-blue-500
-                text-base
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                transition-colors duration-150
+                touch-manipulation
               `}
             />
           </div>
