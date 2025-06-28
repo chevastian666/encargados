@@ -17,7 +17,11 @@ export default {
       'tablet-portrait': { 'raw': '(min-width: 768px) and (max-width: 1024px) and (orientation: portrait)' },
       'tablet-landscape': { 'raw': '(min-width: 768px) and (max-width: 1024px) and (orientation: landscape)' },
       'mobile': { 'max': '767px' },
-      'desktop': '1025px'
+      'desktop': '1025px',
+      // Galaxy Tab Active5 5G specific breakpoints
+      'galaxy-tab-active5': { 'raw': '(min-width: 1200px) and (max-width: 1920px)' },
+      'galaxy-tab-active5-portrait': { 'raw': '(min-width: 1200px) and (max-width: 1920px) and (orientation: portrait)' },
+      'galaxy-tab-active5-landscape': { 'raw': '(min-width: 1200px) and (max-width: 1920px) and (orientation: landscape)' }
     },
     extend: {
       animation: {

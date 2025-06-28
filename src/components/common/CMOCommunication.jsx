@@ -22,7 +22,7 @@ const CMOCommunication = ({ darkMode = false, position = 'bottom-right' }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
   const messagesEndRef = useRef(null);
   const audioRef = useRef(null);
 
@@ -113,7 +113,7 @@ const CMOCommunication = ({ darkMode = false, position = 'bottom-right' }) => {
       showBrowserNotification(newMessage);
       
       // Notificación en la UI
-      showNotification(`Nuevo mensaje del CMO: ${message.title || message.content}`, 'info');
+      info(`Nuevo mensaje del CMO: ${message.title || message.content}`);
     }
   };
 
@@ -188,9 +188,9 @@ const CMOCommunication = ({ darkMode = false, position = 'bottom-right' }) => {
       setReplyText('');
       setSelectedMessage(null);
       
-      showNotification('Respuesta enviada', 'success');
+      success('Respuesta enviada');
     } catch (error) {
-      showNotification('Error al enviar respuesta', 'error');
+      error('Error al enviar respuesta');
     }
   };
 

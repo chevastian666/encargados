@@ -115,7 +115,7 @@ ModuleCard.displayName = 'ModuleCard';
  */
 const DashboardFixed = ({ onModuleClick }) => {
   const [darkMode, , toggleDarkMode] = useDarkMode();
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
   
   // Usar el nuevo hook de estadísticas
   const { 
@@ -123,7 +123,7 @@ const DashboardFixed = ({ onModuleClick }) => {
     performance, 
     historicalData, 
     loading, 
-    error, 
+    error: statsError, 
     refreshStats,
     getMetricColor 
   } = useDashboardStats(10000);
@@ -253,21 +253,20 @@ const DashboardFixed = ({ onModuleClick }) => {
     switch (action) {
       case 'refresh':
         refreshStats();
-        showNotification('Datos actualizados', 'success');
+        success('Datos actualizados');
         break;
       case 'export':
-        showNotification('Generando reporte...', 'info');
+        info('Generando reporte...');
         break;
       case 'alerts':
         onModuleClick('alertas');
         break;
       case 'emergency':
-        showNotification('Protocolo de emergencia activado', 'warning');
+        warning('Protocolo de emergencia activado');
         break;
       case 'toggleProcess':
-        showNotification(
-          `${data.processId} ${data.active ? 'activado' : 'desactivado'}`,
-          'info'
+        info(
+          `${data.processId} ${data.active ? 'activado' : 'desactivado'}`
         );
         break;
       default:

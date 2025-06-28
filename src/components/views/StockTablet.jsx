@@ -19,7 +19,7 @@ import apiService from '../../services/api.service';
 const StockTablet = ({ isOpen, onClose, darkMode }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [tempValues, setTempValues] = useState({});
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
 
   // Cargar datos de stock
   const { data: stockData, loading, refetch } = useApiData(
@@ -71,11 +71,11 @@ const StockTablet = ({ isOpen, onClose, darkMode }) => {
         critico: parseInt(tempValues[criticoKey])
       });
       
-      showNotification('Valores actualizados correctamente', 'success');
+      success('Valores actualizados correctamente');
       setEditingItem(null);
       refetch();
     } catch (error) {
-      showNotification('Error al actualizar valores', 'error');
+      error('Error al actualizar valores');
     }
   };
 
@@ -265,7 +265,7 @@ const StockTablet = ({ isOpen, onClose, darkMode }) => {
         Actualizar
       </TabletButton>
       <TabletButton
-        onClick={() => showNotification('Exportando inventario...', 'info')}
+        onClick={() => info('Exportando inventario...')}
         variant="secondary"
         size="small"
         darkMode={darkMode}

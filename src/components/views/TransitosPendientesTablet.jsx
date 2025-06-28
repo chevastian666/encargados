@@ -42,7 +42,7 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0); // Para navegación con teclado
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
 
   // Cargar datos con polling
   const { data: transitos, loading, refetch, updateData } = useApiData(
@@ -130,7 +130,7 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
       action: (e) => {
         e.preventDefault();
         refetch();
-        showNotification('Datos actualizados', 'info');
+        info('Datos actualizados');
       },
       description: 'Actualizar'
     },
@@ -364,21 +364,21 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
           await apiService.updateTransitoEstado(transitoId, 'completado');
           setSuccessMessage(`✅ Tránsito ${transito.matricula} completado`);
           setShowSuccessAnimation(true);
-          showNotification(`Tránsito ${transito.matricula} completado exitosamente`, 'success');
+          success(`Tránsito ${transito.matricula} completado exitosamente`);
           break;
           
         case 'precintar':
           await apiService.updateTransitoEstado(transitoId, 'precintando');
           setSuccessMessage(`🔒 Iniciando precintado de ${transito.matricula}`);
           setShowSuccessAnimation(true);
-          showNotification(`Iniciado precintado de ${transito.matricula}`, 'success');
+          success(`Iniciado precintado de ${transito.matricula}`);
           break;
           
         case 'marcar_listo':
           await apiService.updateTransitoEstado(transitoId, 'listo');
           setSuccessMessage(`✅ ${transito.matricula} listo para precintar`);
           setShowSuccessAnimation(true);
-          showNotification(`Tránsito ${transito.matricula} marcado como listo`, 'success');
+          success(`Tránsito ${transito.matricula} marcado como listo`);
           break;
       }
       
@@ -389,7 +389,7 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
       }, 500);
       
     } catch (error) {
-      showNotification('Error al procesar acción', 'error');
+      error('Error al procesar acción');
       setAnimatingTransitoId(null);
     } finally {
       setProcessingAction(false);
@@ -401,7 +401,7 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
   // Guardar observación
   const handleGuardarObservacion = async () => {
     if (!observacionText.trim()) {
-      showNotification('La observación no puede estar vacía', 'warning');
+      warning('La observación no puede estar vacía');
       return;
     }
 
@@ -410,13 +410,13 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
       await apiService.addTransitoObservacion(transitoObservacion.id, observacionText);
       setSuccessMessage(`💬 Observación agregada a ${transitoObservacion.matricula}`);
       setShowSuccessAnimation(true);
-      showNotification('Observación agregada correctamente', 'success');
+      success('Observación agregada correctamente');
       setShowObservacionModal(false);
       setObservacionText('');
       setTransitoObservacion(null);
       refetch();
     } catch (error) {
-      showNotification('Error al guardar observación', 'error');
+      error('Error al guardar observación');
     }
   };
 
@@ -465,7 +465,7 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
       }, 500);
       
     } catch (error) {
-      showNotification('Error al cambiar estado', 'error');
+      error('Error al cambiar estado');
       setAnimatingTransitoId(null);
     }
   };
@@ -485,13 +485,14 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
       <div 
         className={`
           ${darkMode ? 'bg-gray-800' : 'bg-white'}
-          border-2 rounded-xl p-6 
+          border-2 rounded-xl p-5 galaxy-tab-active5:p-6
           hover:shadow-lg transition-all duration-300
           ${isUrgent ? estado.borderClass + ' border-2' : darkMode ? 'border-gray-700' : 'border-gray-200'}
           ${isLowPriority ? 'opacity-60' : ''}
           ${isHovered ? 'shadow-xl scale-[1.02]' : ''}
           ${isAnimating ? 'animate-pulse scale-[1.05] shadow-2xl' : ''}
           relative overflow-hidden cursor-pointer
+          min-h-[200px] galaxy-tab-active5:min-h-[220px]
         `}
         onMouseEnter={() => setHoveredTransitoId(transito.id)}
         onMouseLeave={() => setHoveredTransitoId(null)}
@@ -512,79 +513,82 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
           </div>
         </div>
         
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
-        {/* Información principal */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Vehículo */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Truck className="w-5 h-5 text-gray-400" />
-              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Vehículo
-              </span>
-            </div>
-            <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              {transito.matricula}
-            </p>
-            {transito.secundaria && (
-              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Semi: {transito.secundaria}
+        {/* Información principal reorganizada */}
+        <div className="space-y-4 mt-12">
+          {/* Primera fila: Vehículo y Depósito */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Vehículo */}
+            <div>
+              <div className="flex items-center space-x-2 mb-1">
+                <Truck className="w-4 h-4 galaxy-tab-active5:w-5 galaxy-tab-active5:h-5 text-gray-400" />
+                <span className={`text-xs galaxy-tab-active5:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Vehículo
+                </span>
+              </div>
+              <p className={`text-base galaxy-tab-active5:text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                {transito.matricula}
               </p>
-            )}
-          </div>
-
-          {/* Depósito y tipo */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Building className="w-5 h-5 text-gray-400" />
-              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Destino
-              </span>
+              {transito.secundaria && (
+                <p className={`text-xs galaxy-tab-active5:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Semi: {transito.secundaria}
+                </p>
+              )}
             </div>
-            <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              {transito.deposito}
-            </p>
-            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Tipo: {transito.tipo}
-              {transito.codigo && ` - ${transito.codigo}`}
-            </p>
-          </div>
 
-          {/* Chofer */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <User className="w-5 h-5 text-gray-400" />
-              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Chofer
-              </span>
-            </div>
-            <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              {transito.chofer}
-            </p>
-            <div className="flex items-center space-x-2">
-              <Phone className="w-4 h-4 text-gray-400" />
-              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                {transito.telefono}
+            {/* Depósito */}
+            <div>
+              <div className="flex items-center space-x-2 mb-1">
+                <Building className="w-4 h-4 galaxy-tab-active5:w-5 galaxy-tab-active5:h-5 text-gray-400" />
+                <span className={`text-xs galaxy-tab-active5:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Destino
+                </span>
+              </div>
+              <p className={`text-base galaxy-tab-active5:text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                {transito.deposito}
+              </p>
+              <p className={`text-xs galaxy-tab-active5:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {transito.tipo}
+                {transito.codigo && ` - ${transito.codigo}`}
               </p>
             </div>
           </div>
 
-          {/* Tiempo de salida con indicador visual */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Timer className="w-5 h-5 text-gray-400" />
-              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Tiempo
-              </span>
+          {/* Segunda fila: Chofer y Tiempo */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Chofer */}
+            <div>
+              <div className="flex items-center space-x-2 mb-1">
+                <User className="w-4 h-4 galaxy-tab-active5:w-5 galaxy-tab-active5:h-5 text-gray-400" />
+                <span className={`text-xs galaxy-tab-active5:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Chofer
+                </span>
+              </div>
+              <p className={`text-base galaxy-tab-active5:text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} truncate`}>
+                {transito.chofer}
+              </p>
+              <div className="flex items-center space-x-1">
+                <Phone className="w-3 h-3 galaxy-tab-active5:w-4 galaxy-tab-active5:h-4 text-gray-400" />
+                <p className={`text-xs galaxy-tab-active5:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {transito.telefono}
+                </p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+
+            {/* Tiempo de salida */}
+            <div>
+              <div className="flex items-center space-x-2 mb-1">
+                <Clock className="w-4 h-4 galaxy-tab-active5:w-5 galaxy-tab-active5:h-5 text-gray-400" />
+                <span className={`text-xs galaxy-tab-active5:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Salida
+                </span>
+              </div>
+              <p className={`text-base galaxy-tab-active5:text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 {transito.salida}
               </p>
-              {/* Indicador de urgencia temporal */}
+              {/* Indicador de urgencia */}
               {transito.tiempoRestante && (
                 <div className={`
-                  text-xs px-2 py-1 rounded-full inline-flex items-center
+                  text-xs px-2 py-0.5 rounded-full inline-flex items-center mt-1
                   ${transito.tiempoRestante < 30 
                     ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
                     : transito.tiempoRestante < 60
@@ -592,7 +596,7 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
                     : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
                   }
                 `}>
-                  <Clock className="w-3 h-3 mr-1" />
+                  <Timer className="w-3 h-3 mr-1" />
                   {transito.tiempoRestante < 60 
                     ? `${transito.tiempoRestante}min` 
                     : `${Math.floor(transito.tiempoRestante / 60)}h`
@@ -603,49 +607,51 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
           </div>
         </div>
 
-        {/* Acciones con cambio rápido de estado */}
-        <div className="flex flex-col space-y-3 lg:ml-4">
-          {/* Cambio rápido de estado */}
-          <div onClick={(e) => e.stopPropagation()}>
-            <QuickStatusChange
+        {/* Acciones simplificadas */}
+        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex gap-2 galaxy-tab-active5:gap-3">
+            {/* Botón principal según estado */}
+            {transito.estado === 'esperando' && (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    await apiService.updateTransitoEstado(transito.id, 'listo');
+                    success('Marcado como listo para precintar');
+                    refetch();
+                  } catch (error) {
+                    error('Error al actualizar');
+                  }
+                }}
+                className="flex-1 px-4 py-2.5 galaxy-tab-active5:px-5 galaxy-tab-active5:py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm galaxy-tab-active5:text-base font-medium transition-colors flex items-center justify-center gap-1 galaxy-tab-active5:gap-2 min-h-[44px] galaxy-tab-active5:min-h-[48px]"
+              >
+                <CheckCircle className="w-4 h-4 galaxy-tab-active5:w-5 galaxy-tab-active5:h-5" />
+                <span>Listo</span>
+              </button>
+            )}
+            
+            {/* Botón de acciones con QuickStatusChange compacto */}
+            <QuickStatusChange 
               transito={transito}
               onStatusChange={handleQuickStatusChange}
               darkMode={darkMode}
-              compact={false}
+              compact={true}
             />
-          </div>
-          
-          {/* Otras acciones */}
-          <div className="flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-2">
-            <TabletButton
+            
+            {/* Ver detalles */}
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleShowDetalleRapido(transito);
               }}
-              variant="secondary"
-              size="medium"
-              darkMode={darkMode}
-              icon={<Eye className="w-5 h-5" />}
+              className="px-4 py-2.5 galaxy-tab-active5:px-5 galaxy-tab-active5:py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm galaxy-tab-active5:text-base font-medium transition-colors flex items-center justify-center gap-1 galaxy-tab-active5:gap-2 min-h-[44px] galaxy-tab-active5:min-h-[48px]"
             >
-              Ver más
-            </TabletButton>
-            
-            <TabletButton
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAccionRapida(transito.id, 'observacion');
-              }}
-              variant="primary"
-              size="medium"
-              darkMode={darkMode}
-              icon={<MessageSquare className="w-5 h-5" />}
-            >
-              Observaciones
-            </TabletButton>
+              <Eye className="w-4 h-4 galaxy-tab-active5:w-5 galaxy-tab-active5:h-5" />
+              <span>Ver más</span>
+            </button>
           </div>
         </div>
-        </div>
-
+        
         {/* Observaciones si existen */}
         {transito.observaciones && transito.observaciones.length > 0 && (
           <div className={`w-full mt-4 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -1039,8 +1045,8 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
         </div>
       </div>
 
-      {/* Lista de tránsitos con scroll container */}
-      <div className="overflow-y-auto max-h-[70vh] -mx-6 px-6">
+      {/* Lista de tránsitos con scroll container optimizado para Galaxy Tab Active5 */}
+      <div className="overflow-y-auto max-h-[70vh] galaxy-tab-active5:max-h-[75vh] -mx-6 px-6">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -1064,25 +1070,37 @@ const TransitosPendientesTablet = ({ isOpen, onClose, darkMode }) => {
           </div>
         ) : (
           <>
-            {/* Vista Normal - Cards completas con grid responsivo */}
+            {/* Vista Normal - Cards completas optimizadas para Galaxy Tab Active5 */}
             {vistaActual === 'normal' && (
-              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 
+                grid-cols-1 
+                md:grid-cols-2 
+                lg:grid-cols-2 
+                xl:grid-cols-3 
+                galaxy-tab-active5-portrait:grid-cols-2
+                galaxy-tab-active5-landscape:grid-cols-3">
                 {transitosTableroActivo.map((transito) => (
                   <TransitoCard key={transito.id} transito={transito} />
                 ))}
               </div>
             )}
             
-            {/* Vista Miniatura - Grid responsivo para tablets */}
+            {/* Vista Miniatura - Grid optimizado para Galaxy Tab Active5 */}
             {vistaActual === 'miniatura' && (
-              <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 tablet-portrait:grid-cols-2 tablet-landscape:grid-cols-3">
+              <div className="grid gap-3 
+                grid-cols-2 
+                md:grid-cols-3 
+                lg:grid-cols-4 
+                xl:grid-cols-5 
+                galaxy-tab-active5-portrait:grid-cols-3
+                galaxy-tab-active5-landscape:grid-cols-5">
                 {transitosTableroActivo.map((transito) => (
                   <TransitoMiniatura key={transito.id} transito={transito} />
                 ))}
               </div>
             )}
             
-            {/* Vista Compacta - Lista con scroll */}
+            {/* Vista Compacta - Lista con scroll optimizada */}
             {vistaActual === 'compacta' && (
               <div className="space-y-2">
                 {transitosTableroActivo.map((transito) => (

@@ -10,14 +10,14 @@ import apiService from '../../services/api.service';
  * Integra la base de datos de vehículos y choferes
  */
 const NuevoTransitoModal = ({ isOpen, onClose, darkMode, onTransitCreated }) => {
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
 
   const handleSubmit = async (formData) => {
     try {
       // Aquí iría la llamada a la API para crear el tránsito
       const response = await apiService.createTransito(formData);
       
-      showNotification('Tránsito registrado exitosamente', 'success');
+      success('Tránsito registrado exitosamente');
       
       if (onTransitCreated) {
         onTransitCreated(response);
@@ -25,7 +25,7 @@ const NuevoTransitoModal = ({ isOpen, onClose, darkMode, onTransitCreated }) => 
       
       onClose();
     } catch (error) {
-      showNotification('Error al registrar el tránsito', 'error');
+      error('Error al registrar el tránsito');
       console.error('Error:', error);
     }
   };

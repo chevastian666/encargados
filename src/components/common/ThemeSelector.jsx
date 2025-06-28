@@ -1,268 +1,424 @@
 import React, { useState } from 'react';
-import { 
-  Palette, Check, Settings, Download, Upload, 
-  Sun, Moon, Eye, Paintbrush, Monitor
-} from 'lucide-react';
-import { useTheme, THEMES } from '../../contexts/ThemeContext';
-import TabletButton from './TabletButton';
+import { useTheme } from '../../contexts/ThemeContext';
+import { Palette, Monitor, Sun, Moon, Briefcase, Sparkles, Eye, Settings, Check, X, Download, Upload, MonitorSmartphone, Keyboard } from 'lucide-react';
 
-/**
- * Selector de temas con preview
- * Permite cambiar entre temas predefinidos y acceder al editor
- */
 const ThemeSelector = ({ className = '' }) => {
-  const { 
-    currentTheme, 
-    changeTheme, 
+  const {
+    themes,
+    currentTheme,
+    changeTheme,
     toggleTheme,
+    customTheme,
+    startEditingTheme,
+    cancelEditingTheme,
+    saveCustomTheme,
+    updateTempTheme,
+    resetCustomTheme,
+    exportCustomTheme,
+    importCustomTheme,
+    isEditing,
+    tempCustomTheme,
+    followSystemTheme,
+    toggleFollowSystemTheme,
+    enableTransitions,
+    toggleTransitions,
     isDark,
-    isColorblind 
+    getContrastRatio
   } = useTheme();
-  
-  const [isOpen, setIsOpen] = useState(false);
-  const [showColorblind, setShowColorblind] = useState(false);
 
-  // Agrupar temas por categoría
-  const standardThemes = Object.values(THEMES).filter(t => !t.colorblind);
-  const colorblindThemes = Object.values(THEMES).filter(t => t.colorblind);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showCustomEditor, setShowCustomEditor] = useState(false);
+
+  const getThemeIcon = (themeId) => {
+    switch (themeId) {
+      case 'light':
+        return <Sun className="w-4 h-4" />;
+      case 'dark':
+        return <Moon className="w-4 h-4" />;
+      case 'professional':
+        return <Briefcase className="w-4 h-4" />;
+      case 'colorful':
+        return <Sparkles className="w-4 h-4" />;
+      case 'high-contrast':
+      case 'high-contrast-dark':
+        return <Monitor className="w-4 h-4" />;
+      case 'protanopia':
+      case 'deuteranopia':
+      case 'tritanopia':
+        return <Eye className="w-4 h-4" />;
+      default:
+        return <Palette className="w-4 h-4" />;
+    }
+  };
+
+  const themeGroups = {
+    standard: ['light', 'dark', 'professional', 'colorful'],
+    accessibility: ['high-contrast', 'high-contrast-dark'],
+    colorblind: ['protanopia', 'deuteranopia', 'tritanopia']
+  };
 
   return (
-    <div className={`relative ${className}`}>
-      {/* Botón principal */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="min-h-[48px] min-w-[48px] p-3 rounded-lg 
-                   bg-surface-primary border border-primary
-                   hover:bg-surface-secondary active:scale-95
-                   transition-all duration-200
-                   flex items-center justify-center gap-2"
-        aria-label="Selector de temas"
-      >
-        {isDark ? (
-          <Moon className="w-5 h-5 text-primary" />
-        ) : (
-          <Sun className="w-5 h-5 text-primary" />
-        )}
-        <span className="text-sm font-medium text-primary hidden sm:inline">
-          Tema
-        </span>
-      </button>
+    <div className={`p-4 ${className}`}>
+      <div className="flex items-center gap-2 mb-4">
+        <Palette className="w-5 h-5 text-primary" />
+        <h3 className="text-lg font-semibold text-primary">Selector de Temas</h3>
+      </div>
 
-      {/* Dropdown de temas */}
-      {isOpen && (
-        <>
-          {/* Overlay para cerrar */}
-          <div 
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Panel de temas */}
-          <div className="absolute right-0 mt-2 w-80 max-h-[70vh] 
-                          bg-elevated rounded-xl shadow-xl 
-                          border border-primary
-                          overflow-hidden z-50
-                          animate-in fade-in slide-in-from-top-2">
-            
-            {/* Header */}
-            <div className="p-4 border-b border-primary bg-surface-secondary">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
-                  <Palette className="w-5 h-5" />
-                  Temas
-                </h3>
+      <div className="space-y-4">
+        {/* Temas Estándar */}
+        <div>
+          <h4 className="text-sm font-medium text-secondary mb-2">Temas Estándar</h4>
+          <div className="grid grid-cols-2 gap-2">
+            {themeGroups.standard.map((themeId) => {
+              const theme = themes[themeId];
+              return (
                 <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-lg hover:bg-surface-tertiary
-                             transition-colors duration-200"
-                  aria-label="Cerrar"
+                  key={themeId}
+                  onClick={() => changeTheme(themeId)}
+                  className={`
+                    flex items-center gap-2 p-3 rounded-lg border-2 transition-all
+                    ${currentTheme === themeId 
+                      ? 'border-primary bg-primary/10 shadow-md' 
+                      : 'border-primary/20 hover:border-primary/40 hover:bg-secondary'}
+                  `}
                 >
-                  ×
+                  <div className={`
+                    p-2 rounded-md
+                    ${currentTheme === themeId ? 'bg-primary text-white' : 'bg-tertiary'}
+                  `}>
+                    {getThemeIcon(themeId)}
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-primary">{theme.name}</div>
+                    <div className="text-xs text-tertiary">{theme.description}</div>
+                  </div>
                 </button>
-              </div>
-              
-              {/* Toggle rápido claro/oscuro */}
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-sm text-secondary">Modo rápido</span>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Temas de Accesibilidad */}
+        <div>
+          <h4 className="text-sm font-medium text-secondary mb-2">Alta Accesibilidad</h4>
+          <div className="grid grid-cols-1 gap-2">
+            {themeGroups.accessibility.map((themeId) => {
+              const theme = themes[themeId];
+              return (
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleTheme();
-                  }}
-                  className="relative inline-flex h-6 w-11 items-center rounded-full
-                             bg-surface-tertiary border border-primary
-                             transition-colors duration-200"
+                  key={themeId}
+                  onClick={() => changeTheme(themeId)}
+                  className={`
+                    flex items-center gap-2 p-3 rounded-lg border-2 transition-all
+                    ${currentTheme === themeId 
+                      ? 'border-primary bg-primary/10 shadow-md' 
+                      : 'border-primary/20 hover:border-primary/40 hover:bg-secondary'}
+                  `}
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full
-                                bg-primary transition-transform duration-200
-                                ${isDark ? 'translate-x-6' : 'translate-x-1'}`}
-                  />
+                  <div className={`
+                    p-2 rounded-md
+                    ${currentTheme === themeId ? 'bg-primary text-white' : 'bg-tertiary'}
+                  `}>
+                    {getThemeIcon(themeId)}
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-primary">{theme.name}</div>
+                    <div className="text-xs text-tertiary">{theme.description}</div>
+                  </div>
                 </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Temas para Daltonismo */}
+        <div>
+          <h4 className="text-sm font-medium text-secondary mb-2">Daltonismo</h4>
+          <div className="grid grid-cols-1 gap-2">
+            {themeGroups.colorblind.map((themeId) => {
+              const theme = themes[themeId];
+              return (
+                <button
+                  key={themeId}
+                  onClick={() => changeTheme(themeId)}
+                  className={`
+                    flex items-center gap-2 p-3 rounded-lg border-2 transition-all
+                    ${currentTheme === themeId 
+                      ? 'border-primary bg-primary/10 shadow-md' 
+                      : 'border-primary/20 hover:border-primary/40 hover:bg-secondary'}
+                  `}
+                >
+                  <div className={`
+                    p-2 rounded-md
+                    ${currentTheme === themeId ? 'bg-primary text-white' : 'bg-tertiary'}
+                  `}>
+                    {getThemeIcon(themeId)}
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-primary">{theme.name}</div>
+                    <div className="text-xs text-tertiary">{theme.description}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Configuración Avanzada */}
+        <div className="mt-4 pt-4 border-t border-primary/20">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="flex items-center gap-2 text-sm text-secondary hover:text-primary transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            Configuración Avanzada
+          </button>
+
+          {showSettings && (
+            <div className="mt-4 space-y-3 p-3 bg-secondary rounded-lg">
+              {/* Seguir tema del sistema */}
+              <label className="flex items-center justify-between cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <MonitorSmartphone className="w-4 h-4 text-secondary" />
+                  <span className="text-sm">Seguir tema del sistema</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={followSystemTheme}
+                  onChange={toggleFollowSystemTheme}
+                  className="w-4 h-4 rounded border-primary/30 text-primary focus:ring-primary"
+                />
+              </label>
+
+              {/* Transiciones suaves */}
+              <label className="flex items-center justify-between cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-secondary" />
+                  <span className="text-sm">Transiciones suaves</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={enableTransitions}
+                  onChange={toggleTransitions}
+                  className="w-4 h-4 rounded border-primary/30 text-primary focus:ring-primary"
+                />
+              </label>
+
+              {/* Atajo de teclado */}
+              <div className="flex items-center gap-2 text-sm text-tertiary">
+                <Keyboard className="w-4 h-4" />
+                <span>Atajo: Ctrl+Shift+D para alternar modo oscuro</span>
               </div>
+
+              {/* Editor de tema personalizado */}
+              <button
+                onClick={() => {
+                  setShowCustomEditor(true);
+                  startEditingTheme();
+                }}
+                className="w-full mt-3 p-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <Palette className="w-4 h-4" />
+                Editar Tema Personalizado
+              </button>
             </div>
+          )}
+        </div>
 
-            {/* Lista de temas */}
-            <div className="overflow-y-auto max-h-[50vh] p-2">
-              {/* Temas estándar */}
-              <div className="mb-4">
-                <h4 className="text-xs font-medium text-tertiary uppercase 
-                               tracking-wider px-2 py-1">
-                  Temas Estándar
-                </h4>
-                <div className="grid gap-2">
-                  {standardThemes.map((theme) => (
-                    <ThemeOption
-                      key={theme.id}
-                      theme={theme}
-                      isActive={currentTheme === theme.id}
-                      onClick={() => {
-                        changeTheme(theme.id);
-                        setIsOpen(false);
-                      }}
-                    />
-                  ))}
+        {/* Botón de tema personalizado si existe */}
+        <div className="mt-4">
+          <button
+            onClick={() => changeTheme('custom')}
+            className={`
+              w-full flex items-center gap-2 p-3 rounded-lg border-2 transition-all
+              ${currentTheme === 'custom'
+                ? 'border-primary bg-primary/10 shadow-md'
+                : 'border-primary/20 hover:border-primary/40 hover:bg-secondary'}
+            `}
+          >
+            <div className={`
+              p-2 rounded-md
+              ${currentTheme === 'custom' ? 'bg-primary text-white' : 'bg-tertiary'}
+            `}>
+              <Settings className="w-4 h-4" />
+            </div>
+            <div className="text-left flex-1">
+              <div className="font-medium text-primary">{customTheme.name}</div>
+              <div className="text-xs text-tertiary">{customTheme.description}</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Modal de editor de tema personalizado */}
+      {showCustomEditor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-primary max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-primary">Editor de Tema Personalizado</h3>
+                <button
+                  onClick={() => {
+                    setShowCustomEditor(false);
+                    cancelEditingTheme();
+                  }}
+                  className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Información básica */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-secondary mb-1">Nombre del tema</label>
+                  <input
+                    type="text"
+                    value={tempCustomTheme.name}
+                    onChange={(e) => updateTempTheme({ name: e.target.value })}
+                    className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary mb-1">Descripción</label>
+                  <input
+                    type="text"
+                    value={tempCustomTheme.description}
+                    onChange={(e) => updateTempTheme({ description: e.target.value })}
+                    className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary mb-1">Tipo de tema</label>
+                  <select
+                    value={tempCustomTheme.type}
+                    onChange={(e) => updateTempTheme({ type: e.target.value })}
+                    className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="light">Claro</option>
+                    <option value="dark">Oscuro</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Botón para mostrar temas de accesibilidad */}
-              <button
-                onClick={() => setShowColorblind(!showColorblind)}
-                className="w-full px-3 py-2 mb-2 rounded-lg
-                           bg-surface-secondary hover:bg-surface-tertiary
-                           transition-colors duration-200
-                           flex items-center justify-between
-                           text-sm text-secondary"
-              >
-                <span className="flex items-center gap-2">
-                  <Eye className="w-4 h-4" />
-                  Temas de Accesibilidad
-                </span>
-                <span className="text-xs">
-                  {showColorblind ? '−' : '+'}
-                </span>
-              </button>
-
-              {/* Temas para daltónicos */}
-              {showColorblind && (
-                <div className="mb-4">
-                  <div className="grid gap-2">
-                    {colorblindThemes.map((theme) => (
-                      <ThemeOption
-                        key={theme.id}
-                        theme={theme}
-                        isActive={currentTheme === theme.id}
-                        onClick={() => {
-                          changeTheme(theme.id);
-                          setIsOpen(false);
-                        }}
-                      />
+              {/* Editor de colores */}
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-sm font-medium text-secondary mb-3">Colores del tema</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(tempCustomTheme.colors || {}).map(([key, value]) => (
+                      <div key={key} className="space-y-1">
+                        <label className="text-xs text-tertiary capitalize">{key}</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={`#${value.split(' ').map(n => parseInt(n).toString(16).padStart(2, '0')).join('')}`}
+                            onChange={(e) => {
+                              const hex = e.target.value;
+                              const r = parseInt(hex.slice(1, 3), 16);
+                              const g = parseInt(hex.slice(3, 5), 16);
+                              const b = parseInt(hex.slice(5, 7), 16);
+                              updateTempTheme({
+                                colors: {
+                                  ...tempCustomTheme.colors,
+                                  [key]: `${r} ${g} ${b}`
+                                }
+                              });
+                            }}
+                            className="w-10 h-10 rounded cursor-pointer"
+                          />
+                          <input
+                            type="text"
+                            value={value}
+                            readOnly
+                            className="flex-1 px-2 py-1 text-xs border border-primary/20 rounded bg-secondary"
+                          />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
-              )}
 
-              {/* Tema personalizado */}
-              <div className="border-t border-primary pt-4 mt-4">
-                <ThemeOption
-                  theme={{
-                    id: 'custom',
-                    name: 'Personalizado',
-                    description: 'Crea tu propio tema',
-                    icon: '⚙️'
-                  }}
-                  isActive={currentTheme === 'custom'}
-                  onClick={() => {
-                    changeTheme('custom');
-                    setIsOpen(false);
-                  }}
-                  showEditButton
-                />
+                {/* Vista previa del contraste */}
+                <div className="p-4 bg-secondary rounded-lg">
+                  <h4 className="text-sm font-medium mb-2">Prueba de contraste</h4>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span>Texto primario sobre fondo primario:</span>
+                      <span className="font-mono">
+                        {getContrastRatio(tempCustomTheme.texts.primary, tempCustomTheme.backgrounds.primary).toFixed(2)}:1
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Texto secundario sobre fondo secundario:</span>
+                      <span className="font-mono">
+                        {getContrastRatio(tempCustomTheme.texts.secondary, tempCustomTheme.backgrounds.secondary).toFixed(2)}:1
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Acciones */}
+              <div className="flex items-center justify-between mt-6 pt-6 border-t border-primary/20">
+                <div className="flex gap-2">
+                  <button
+                    onClick={resetCustomTheme}
+                    className="px-4 py-2 text-sm text-secondary hover:text-primary transition-colors"
+                  >
+                    Restablecer
+                  </button>
+                  <button
+                    onClick={exportCustomTheme}
+                    className="px-4 py-2 text-sm text-secondary hover:text-primary transition-colors flex items-center gap-1"
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportar
+                  </button>
+                  <label className="px-4 py-2 text-sm text-secondary hover:text-primary transition-colors flex items-center gap-1 cursor-pointer">
+                    <Upload className="w-4 h-4" />
+                    Importar
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          importCustomTheme(file);
+                          setShowCustomEditor(false);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setShowCustomEditor(false);
+                      cancelEditingTheme();
+                    }}
+                    className="px-4 py-2 text-sm border border-primary/20 rounded-lg hover:bg-secondary transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      saveCustomTheme();
+                      setShowCustomEditor(false);
+                    }}
+                    className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
+                  >
+                    <Check className="w-4 h-4" />
+                    Guardar
+                  </button>
+                </div>
               </div>
             </div>
-
-            {/* Footer con acciones */}
-            <div className="border-t border-primary p-3 
-                            bg-surface-secondary flex justify-between">
-              <button
-                onClick={() => {
-                  // Abrir editor de temas
-                  window.dispatchEvent(new CustomEvent('openThemeEditor'));
-                  setIsOpen(false);
-                }}
-                className="flex items-center gap-2 px-3 py-2 
-                           text-sm text-secondary hover:text-primary
-                           transition-colors duration-200"
-              >
-                <Paintbrush className="w-4 h-4" />
-                Editor de Temas
-              </button>
-              
-              <button
-                onClick={() => {
-                  // Detectar tema del sistema
-                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  changeTheme(prefersDark ? 'dark' : 'light');
-                  setIsOpen(false);
-                }}
-                className="flex items-center gap-2 px-3 py-2 
-                           text-sm text-secondary hover:text-primary
-                           transition-colors duration-200"
-              >
-                <Monitor className="w-4 h-4" />
-                Auto
-              </button>
-            </div>
           </div>
-        </>
+        </div>
       )}
     </div>
-  );
-};
-
-// Componente para cada opción de tema
-const ThemeOption = ({ theme, isActive, onClick, showEditButton }) => {
-  return (
-    <button
-      onClick={onClick}
-      className={`
-        w-full px-3 py-3 rounded-lg
-        flex items-center gap-3
-        transition-all duration-200
-        ${isActive 
-          ? 'bg-primary/10 border-2 border-primary' 
-          : 'hover:bg-surface-secondary border-2 border-transparent'
-        }
-      `}
-    >
-      {/* Icono del tema */}
-      <span className="text-2xl" role="img" aria-label={theme.name}>
-        {theme.icon}
-      </span>
-      
-      {/* Info del tema */}
-      <div className="flex-1 text-left">
-        <div className="font-medium text-primary flex items-center gap-2">
-          {theme.name}
-          {isActive && <Check className="w-4 h-4 text-success" />}
-        </div>
-        <div className="text-xs text-secondary">
-          {theme.description}
-        </div>
-      </div>
-      
-      {/* Botón de editar para tema personalizado */}
-      {showEditButton && (
-        <Settings 
-          className="w-4 h-4 text-secondary hover:text-primary
-                     transition-colors duration-200"
-          onClick={(e) => {
-            e.stopPropagation();
-            window.dispatchEvent(new CustomEvent('openThemeEditor'));
-          }}
-        />
-      )}
-    </button>
   );
 };
 

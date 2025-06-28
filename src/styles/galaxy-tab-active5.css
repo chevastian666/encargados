@@ -1,0 +1,172 @@
+/* Optimizaciones específicas para Samsung Galaxy Tab Active5 5G */
+/* Resolución: 1920x1200 (landscape) / 1200x1920 (portrait) */
+
+/* Media queries específicas para Galaxy Tab Active5 */
+@media screen and (min-width: 1200px) and (max-width: 1920px) {
+  /* Ajustes globales de tamaño táctil */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Optimización de fuentes para mejor legibilidad */
+  body {
+    font-size: 16px;
+  }
+  
+  /* Ajustes para botones táctiles */
+  button, .btn, [role="button"] {
+    min-height: 48px;
+    padding: 0.75rem 1.25rem;
+  }
+  
+  /* Inputs optimizados para teclado en pantalla */
+  input, textarea, select {
+    min-height: 48px;
+    font-size: 16px; /* Previene zoom en iOS/Android */
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Espaciado entre elementos táctiles */
+  .touch-spacing > * + * {
+    margin-top: 0.75rem;
+  }
+  
+  /* Cards con mejor espaciado */
+  .card {
+    padding: 1.5rem;
+  }
+  
+  /* Modales optimizados para pantalla completa */
+  .modal-content {
+    max-height: 90vh;
+    max-width: 95vw;
+  }
+  
+  /* Scroll suave y momentum */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* Orientación horizontal (landscape) */
+@media screen and (min-width: 1200px) and (max-width: 1920px) and (orientation: landscape) {
+  /* Grid de 3 columnas para cards */
+  .transit-grid-landscape {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+  
+  /* Header más compacto en landscape */
+  .header-landscape {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Altura máxima de scroll ajustada */
+  .scroll-container-landscape {
+    max-height: 75vh;
+  }
+}
+
+/* Orientación vertical (portrait) */
+@media screen and (min-width: 1200px) and (max-width: 1920px) and (orientation: portrait) {
+  /* Grid de 2 columnas para cards */
+  .transit-grid-portrait {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  /* Más espacio vertical en portrait */
+  .scroll-container-portrait {
+    max-height: 80vh;
+  }
+  
+  /* Cards más altas en portrait */
+  .card-portrait {
+    min-height: 250px;
+  }
+}
+
+/* Modo oscuro optimizado para AMOLED de la tablet */
+@media screen and (min-width: 1200px) and (max-width: 1920px) and (prefers-color-scheme: dark) {
+  .dark-mode-optimized {
+    background-color: #000000; /* Negro puro para ahorro de batería */
+  }
+  
+  .dark-mode-card {
+    background-color: #0a0a0a;
+    border-color: #1a1a1a;
+  }
+}
+
+/* Optimizaciones de rendimiento */
+@media screen and (min-width: 1200px) and (max-width: 1920px) {
+  /* Desactivar animaciones complejas para mejor rendimiento */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  /* GPU acceleration para elementos críticos */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Optimización de sombras */
+  .optimized-shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Ajustes para el stylus S Pen (si está disponible) */
+@media (hover: hover) and (pointer: fine) and (min-width: 1200px) and (max-width: 1920px) {
+  /* Área de hover más pequeña para precisión del stylus */
+  .stylus-optimized:hover {
+    transform: scale(1.01);
+  }
+  
+  /* Tooltips optimizados para stylus */
+  .tooltip-stylus {
+    font-size: 14px;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Ajustes específicos para el modo ruggedizado */
+.rugged-mode {
+  /* Bordes más gruesos para mejor visibilidad en exteriores */
+  border-width: 2px;
+  
+  /* Contraste aumentado */
+  filter: contrast(1.1);
+  
+  /* Fuentes más gruesas */
+  font-weight: 500;
+}
+
+/* Optimizaciones para uso con guantes */
+@media screen and (min-width: 1200px) and (max-width: 1920px) {
+  .glove-mode {
+    /* Áreas táctiles más grandes */
+    min-height: 56px;
+    min-width: 56px;
+    
+    /* Espaciado aumentado */
+    margin: 0.5rem;
+    
+    /* Bordes más visibles */
+    border-width: 3px;
+  }
+  
+  .glove-mode-button {
+    padding: 1rem 1.5rem;
+    font-size: 18px;
+    font-weight: 600;
+  }
+}

@@ -17,7 +17,7 @@ const AutomaticAlerts = ({ darkMode = false }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showPanel, setShowPanel] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
   const audioRef = useRef(null);
 
   // Tipos de alerta con configuración
@@ -61,20 +61,6 @@ const AutomaticAlerts = ({ darkMode = false }) => {
     alert: '/sounds/alert.mp3'
   };
 
-  useEffect(() => {
-    // Suscribirse a alertas automáticas
-    const unsubscribe = wsService.subscribe('auto_alert', handleNewAlert);
-    
-    // Solicitar permisos de notificación del navegador
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
   // Manejar nueva alerta
   const handleNewAlert = (alert) => {
     const newAlert = {
@@ -109,7 +95,20 @@ const AutomaticAlerts = ({ darkMode = false }) => {
     showBrowserNotification(alert);
     
     // Mostrar notificación en la UI
-    showNotification(alert.message, getSeverityType(alert.severity));
+    const notificationMethod = getSeverityType(alert.severity);
+    switch (notificationMethod) {
+      case 'error':
+        error(alert.message);
+        break;
+      case 'warning':
+        warning(alert.message);
+        break;
+      case 'info':
+        info(alert.message);
+        break;
+      default:
+        info(alert.message);
+    }
     
     // Abrir panel automáticamente para alertas críticas
     if (alert.severity === 'critical') {
@@ -117,17 +116,34 @@ const AutomaticAlerts = ({ darkMode = false }) => {
     }
   };
 
+  useEffect(() => {
+    // Suscribirse a alertas automáticas
+    const unsubscribe = wsService.subscribe('auto_alert', handleNewAlert);
+    
+    // Solicitar permisos de notificación del navegador
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   // Reproducir sonido de alerta
   const playAlertSound = (alertType) => {
     const config = alertConfigs[alertType];
     const soundFile = alertSounds[config?.sound || 'notification'];
     
+    // Deshabilitado temporalmente hasta que se agreguen los archivos de sonido
+    /*
     if (audioRef.current) {
       audioRef.current.src = soundFile;
       audioRef.current.play().catch(err => {
         console.error('Error reproduciendo sonido:', err);
       });
     }
+    */
   };
 
   // Mostrar notificación del navegador

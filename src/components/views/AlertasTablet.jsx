@@ -20,7 +20,7 @@ const AlertasTablet = ({ isOpen, onClose, darkMode }) => {
   const [filtroPrioridad, setFiltroPrioridad] = useState('todas');
   const [alertaSeleccionada, setAlertaSeleccionada] = useState(null);
   const [comentario, setComentario] = useState('');
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
 
   // Cargar alertas
   const { data: alertasData, loading, refetch } = useApiData(
@@ -57,12 +57,12 @@ const AlertasTablet = ({ isOpen, onClose, darkMode }) => {
   const handleResolver = async (alertaId) => {
     try {
       await apiService.resolverAlerta(alertaId, 'usuario-actual');
-      showNotification('Alerta resuelta correctamente', 'success');
+      success('Alerta resuelta correctamente');
       setAlertaSeleccionada(null);
       setComentario('');
       refetch();
     } catch (error) {
-      showNotification('Error al resolver alerta', 'error');
+      error('Error al resolver alerta');
     }
   };
 
@@ -174,7 +174,7 @@ const AlertasTablet = ({ isOpen, onClose, darkMode }) => {
               Resolver
             </TabletButton>
             <TabletButton
-              onClick={() => showNotification('Alerta silenciada por 1 hora', 'info')}
+              onClick={() => info('Alerta silenciada por 1 hora')}
               variant="secondary"
               size="medium"
               darkMode={darkMode}

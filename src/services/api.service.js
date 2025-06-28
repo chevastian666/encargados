@@ -909,10 +909,11 @@ async checkImageSupport() {
   async getCMOMessages(filters = {}) {
     // En desarrollo, simular mensajes del CMO
     if (CONFIG.IS_DEVELOPMENT) {
-      return this.simulateApiCall({
-        success: true,
+      const result = await this.mockApiCall('/cmo/messages');
+      return {
+        ...result,
         data: this.generateMockCMOMessages()
-      }, 300);
+      };
     }
     
     return this.fetchWithCache('/cmo/messages', {

@@ -22,7 +22,7 @@ const CamionesTablet = ({ isOpen, onClose, darkMode }) => {
   const [searchType, setSearchType] = useState('matricula'); // matricula, empresa, chofer
   const [selectedCamion, setSelectedCamion] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
 
   // Buscar camiones con debounce
   const searchCamiones = useCallback(
@@ -32,7 +32,7 @@ const CamionesTablet = ({ isOpen, onClose, darkMode }) => {
         const result = await apiService.buscarCamion(tipo, valor);
         return result;
       } catch (error) {
-        showNotification('Error en la búsqueda', 'error');
+        error('Error en la búsqueda');
         return [];
       }
     }, 500),
@@ -214,7 +214,7 @@ const CamionesTablet = ({ isOpen, onClose, darkMode }) => {
         {/* Acciones */}
         <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-700 dark:border-gray-200">
           <TabletButton
-            onClick={() => showNotification('Ver historial completo', 'info')}
+            onClick={() => info('Ver historial completo')}
             variant="primary"
             size="medium"
             darkMode={darkMode}
@@ -223,7 +223,7 @@ const CamionesTablet = ({ isOpen, onClose, darkMode }) => {
             Ver Historial
           </TabletButton>
           <TabletButton
-            onClick={() => showNotification('Editar información', 'info')}
+            onClick={() => info('Editar información')}
             variant="secondary"
             size="medium"
             darkMode={darkMode}
@@ -232,7 +232,7 @@ const CamionesTablet = ({ isOpen, onClose, darkMode }) => {
             Editar
           </TabletButton>
           <TabletButton
-            onClick={() => showNotification('Generar reporte', 'info')}
+            onClick={() => info('Generar reporte')}
             variant="secondary"
             size="medium"
             darkMode={darkMode}
@@ -294,7 +294,7 @@ const CamionesTablet = ({ isOpen, onClose, darkMode }) => {
   const headerActions = (
     <div className="flex items-center space-x-2">
       <TabletButton
-        onClick={() => showNotification('Importar datos', 'info')}
+        onClick={() => info('Importar datos')}
         variant="secondary"
         size="small"
         darkMode={darkMode}
@@ -303,7 +303,7 @@ const CamionesTablet = ({ isOpen, onClose, darkMode }) => {
         Importar
       </TabletButton>
       <TabletButton
-        onClick={() => showNotification('Exportar base de datos', 'info')}
+        onClick={() => info('Exportar base de datos')}
         variant="secondary"
         size="small"
         darkMode={darkMode}
@@ -384,7 +384,7 @@ const CamionesTablet = ({ isOpen, onClose, darkMode }) => {
                 Resultados ({resultadosBusqueda.length})
               </h3>
               <TabletButton
-                onClick={() => showNotification('Agregar nuevo camión', 'info')}
+                onClick={() => info('Agregar nuevo camión')}
                 variant="primary"
                 size="small"
                 darkMode={darkMode}

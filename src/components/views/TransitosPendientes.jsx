@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link, Loader2, Sun, Eye, Type, AlertTriangle, ChevronDown } from 'lucide-react';
+import { Package, MapPin, Clock, ChevronRight, AlertCircle, Truck, Link, Loader2, Sun, Eye, Type, AlertTriangle, ChevronDown, CheckCircle, FileText, Building, User, MessageSquare } from 'lucide-react';
 import { Modal, SidePanel } from '../common';
 import TransitoDetails from '../TransitoDetails';
-import { useApiData } from '../../hooks';
+import { useApiData, useNotification } from '../../hooks';
 import { ESTADOS, DEPOSITOS } from '../../constants/constants';
 import apiService from '../../services/api.service';
 import TransitoMiniCard from '../cards/TransitoMiniCard';
@@ -16,6 +16,7 @@ const ITEMS_POR_PAGINA_MINIATURA = 20;
  * Ahora con lazy loading para mejor performance con muchos tránsitos
  */
 const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
+  const { addNotification } = useNotification();
   const [selectedTransito, setSelectedTransito] = useState(null);
   const [showSidePanel, setShowSidePanel] = useState(false);
   const [loadingTransitoId, setLoadingTransitoId] = useState(null);
@@ -287,175 +288,185 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
   const renderTransitoCard = (transito) => {
     const config = estadosConfig[transito.estado];
     const isLoading = loadingTransitoId === transito.id;
-    
-    // Configuración de urgencia
-    const urgenciaConfig = {
-      critico: {
-        bg: 'bg-red-500',
-        text: 'text-white',
-        icon: '🚨',
-        pulse: true,
-        label: `¡Sale en ${transito.minutosHastaSalida} min!`
-      },
-      urgente: {
-        bg: 'bg-orange-500',
-        text: 'text-white',
-        icon: '⚠️',
-        pulse: true,
-        label: `Sale en ${transito.minutosHastaSalida} min`
-      },
-      proximo: {
-        bg: 'bg-yellow-500',
-        text: 'text-white',
-        icon: '⏰',
-        pulse: false,
-        label: `Sale en ${Math.floor(transito.minutosHastaSalida / 60)}h ${transito.minutosHastaSalida % 60}min`
-      },
-      normal: {
-        bg: null,
-        text: null,
-        icon: null,
-        pulse: false,
-        label: null
-      }
-    };
-    
-    const urgencia = urgenciaConfig[transito.nivelUrgencia];
+    const minutosHastaSalida = calcularMinutosHastaSalida(transito.salida);
+    const nivelUrgencia = getNivelUrgencia(minutosHastaSalida);
     
     return (
       <div 
         key={transito.id}
         className={`
-          relative
-          ${altoContraste 
-            ? 'bg-white border-4 border-black' 
-            : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700'
-          }
-          rounded-xl
-          ${config.borderColor} border-l-8
-          ${!altoContraste && 'hover:border-blue-400 dark:hover:border-blue-500'}
-          shadow-sm hover:shadow-xl
-          transition-all duration-300
-          overflow-hidden
-          p-5 sm:p-6
-          touch-manipulation
-          select-none
-          transform hover:scale-[1.02]
-          ${isLoading ? 'opacity-75' : ''}
-          ${transito.nivelUrgencia === 'critico' ? 'ring-2 ring-red-500 ring-offset-2' : ''}
+          ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}
+          border rounded-lg shadow-sm
+          ${config.borderColor} border-l-4
+          ${isLoading ? 'opacity-50' : ''}
+          transition-all duration-200 hover:shadow-md
         `}
       >
-        {/* Badge de urgencia en la parte superior */}
-        {urgencia.label && (
-          <div className={`
-            absolute -top-3 left-1/2 transform -translate-x-1/2
-            ${urgencia.bg} ${urgencia.text}
-            px-3 py-1 rounded-full text-xs font-bold
-            shadow-lg z-10
-            ${urgencia.pulse ? 'animate-pulse' : ''}
-            ${altoContraste ? 'border-2 border-black' : ''}
-          `}>
-            {urgencia.icon} {urgencia.label}
-          </div>
-        )}
-
-        {/* Badge flotante mejorado para estado crítico */}
-        {transito.estado === 'precintando' && !altoContraste && (
-          <>
-            <div className="absolute -top-2 -right-2">
-              <span className="relative flex h-5 w-5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500"></span>
-              </span>
+        <div className="p-4">
+          {/* Header con estado actual y urgencia */}
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                  {transito.matricula}
+                </h3>
+                {transito.secundaria && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    ({transito.secundaria})
+                  </span>
+                )}
+              </div>
+              
+              {/* Estado actual con icono */}
+              <div className="flex items-center gap-2">
+                <config.icon className={`w-4 h-4 text-${config.gradient.includes('yellow') ? 'yellow' : config.gradient.includes('blue') ? 'blue' : 'red'}-500`} />
+                <span className={`
+                  px-2 py-0.5 text-xs rounded font-medium
+                  ${config.badgeColor}
+                `}>
+                  {ESTADOS[transito.estado].label}
+                </span>
+                
+                {/* Indicador de urgencia */}
+                {nivelUrgencia !== 'normal' && (
+                  <span className={`
+                    px-2 py-0.5 text-xs rounded font-medium animate-pulse
+                    ${
+                      nivelUrgencia === 'critico' 
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
+                        : nivelUrgencia === 'urgente'
+                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400'
+                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-400'
+                    }
+                  `}>
+                    {nivelUrgencia === 'critico' ? '¡Crítico!' : nivelUrgencia === 'urgente' ? 'Urgente' : 'Próximo'}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-red-600 to-red-500 animate-pulse" />
-          </>
-        )}
-
-        <div className="flex justify-between mb-4 mt-2">
-          <div>
-            <h3 className={`${currentSize.titulo} font-bold ${altoContraste ? 'text-black' : darkMode ? 'text-white' : 'text-gray-900'}`}>
-              {transito.matricula}
-            </h3>
-            <p className={`${currentSize.subtitulo} ${altoContraste ? 'text-black' : darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              {transito.secundaria}
-            </p>
           </div>
-          <span className={`
-            ${currentSize.badge} rounded-full font-semibold text-white 
-            bg-gradient-to-r ${config.gradient}
-            ${transito.estado === 'precintando' && !altoContraste ? 'animate-pulse' : ''}
-            select-none shadow-md
-            ${altoContraste ? 'border-2 border-black' : ''}
-          `}>
-            {ESTADOS[transito.estado].label}
-          </span>
-        </div>
 
-        <div className={`space-y-3 ${altoContraste ? 'text-black' : darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          <p className={`${currentSize.texto} flex items-center gap-2`}>
-            <MapPin className={`${currentSize.icono} flex-shrink-0 ${altoContraste ? 'text-black' : 'text-gray-500'}`} />
-            <span className="truncate font-medium">{transito.deposito}</span>
-          </p>
-          <p className={`${currentSize.texto} flex items-center gap-2`}>
-            <Package className={`${currentSize.icono} flex-shrink-0 ${altoContraste ? 'text-black' : 'text-gray-500'}`} />
-            <span className="truncate">
-              {transito.tipo === 'contenedor' ? `Contenedor: ${transito.codigo}` : 'Carga con Lona'}
-            </span>
-          </p>
-          <p className={`${currentSize.texto} font-semibold flex items-center gap-2
-            ${transito.nivelUrgencia === 'critico' ? 'text-red-600 animate-pulse' : ''}
-            ${transito.nivelUrgencia === 'urgente' ? 'text-orange-600' : ''}
-          `}>
-            <Clock className={`${currentSize.icono} flex-shrink-0 
-              ${transito.nivelUrgencia === 'critico' ? 'text-red-600' : ''}
-              ${transito.nivelUrgencia === 'urgente' ? 'text-orange-600' : ''}
-              ${altoContraste ? 'text-black' : 'text-gray-500'}
-            `} />
-            <span className={`${tamanoTexto === 'extragrande' ? 'text-xl' : 'text-base'}`}>
-              Salida: {transito.salida}
-            </span>
-          </p>
-        </div>
+          {/* Información del tránsito */}
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Building className="w-4 h-4" />
+              <span className="font-medium">{transito.deposito}</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <User className="w-4 h-4" />
+              <span>{transito.chofer}</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="w-4 h-4" />
+              <span className="font-medium">Salida: {transito.salida}</span>
+              {minutosHastaSalida > 0 && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  (en {Math.floor(minutosHastaSalida / 60)}h {minutosHastaSalida % 60}m)
+                </span>
+              )}
+            </div>
+            
+            {transito.observaciones && (
+              <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <MessageSquare className="w-4 h-4 mt-0.5" />
+                <span className="italic">{transito.observaciones}</span>
+              </div>
+            )}
+          </div>
 
-        <button 
-          onClick={() => handleVerDetalles(transito)}
-          disabled={isLoading}
-          className={`
-            w-full mt-5 px-5 ${currentSize.boton}
-            ${isLoading 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : transito.nivelUrgencia === 'critico' 
-                ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white animate-pulse'
-                : transito.nivelUrgencia === 'urgente'
-                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white'
-                  : altoContraste
-                    ? 'bg-black text-white hover:bg-gray-800'
-                    : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white'
-            }
-            font-medium
-            rounded-lg 
-            transition-all duration-200 
-            flex items-center justify-center gap-2
-            touch-manipulation
-            select-none
-            ${!isLoading && 'active:scale-95'}
-            shadow-md hover:shadow-lg
-            ${altoContraste ? 'border-2 border-black' : ''}
-          `}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className={`${currentSize.icono} animate-spin`} />
-              Cargando...
-            </>
-          ) : (
-            <>
-              Ver Detalles
-              <ChevronRight className={currentSize.icono} />
-            </>
-          )}
-        </button>
+          {/* Botones de acción */}
+          <div className="space-y-3">
+            {/* Acciones rápidas de estado */}
+            {transito.estado !== 'precintado' && (
+              <div className="grid grid-cols-2 gap-2">
+                {/* Botón Listo para precintar */}
+                <button
+                  onClick={async () => {
+                    setLoadingTransitoId(transito.id);
+                    try {
+                      await apiService.updateTransitoEstado(transito.id, 'listo');
+                      addNotification('success', `${transito.matricula} marcado como listo`);
+                      refetch();
+                    } catch (error) {
+                      addNotification('error', 'Error al actualizar estado');
+                    } finally {
+                      setLoadingTransitoId(null);
+                    }
+                  }}
+                  disabled={isLoading || transito.estado === 'listo'}
+                  className={`
+                    px-3 py-2 rounded font-medium text-sm
+                    transition-all duration-200 flex items-center justify-center gap-1
+                    ${
+                      transito.estado === 'listo'
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : 'bg-green-500 hover:bg-green-600 text-white active:scale-95'
+                    }
+                    disabled:opacity-50
+                  `}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Listo</span>
+                </button>
+                
+                {/* Botón Pasando soga */}
+                <button
+                  onClick={async () => {
+                    setLoadingTransitoId(transito.id);
+                    try {
+                      await apiService.updateTransitoEstado(transito.id, 'pasando_soga');
+                      addNotification('info', `${transito.matricula} pasando soga`);
+                      refetch();
+                    } catch (error) {
+                      addNotification('error', 'Error al actualizar estado');
+                    } finally {
+                      setLoadingTransitoId(null);
+                    }
+                  }}
+                  disabled={isLoading || transito.estado === 'pasando_soga'}
+                  className={`
+                    px-3 py-2 rounded font-medium text-sm
+                    transition-all duration-200 flex items-center justify-center gap-1
+                    ${
+                      transito.estado === 'pasando_soga'
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : 'bg-blue-500 hover:bg-blue-600 text-white active:scale-95'
+                    }
+                    disabled:opacity-50
+                  `}
+                >
+                  <Link className="w-4 h-4" />
+                  <span>Pasando soga</span>
+                </button>
+              </div>
+            )}
+            
+            {/* Botones secundarios */}
+            <div className="flex gap-2">
+              {/* Botón de problema */}
+              <button
+                onClick={() => {
+                  // Aquí iría la lógica para marcar con problema
+                  addNotification('warning', 'Función en desarrollo');
+                }}
+                className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded font-medium text-sm transition-all duration-200 active:scale-95"
+              >
+                <AlertTriangle className="w-4 h-4" />
+              </button>
+              
+              {/* Botón Ver más */}
+              <button
+                onClick={() => handleVerDetalles(transito)}
+                className="flex-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded font-medium text-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-1"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Ver detalles</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -532,8 +543,9 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
           )}
           
           {/* Controles de accesibilidad */}
-          <div className="flex flex-wrap gap-2 justify-between items-center">
-            <div className="flex gap-2">
+          <div className="space-y-4">
+            {/* Fila de controles de accesibilidad */}
+            <div className="flex flex-wrap gap-2 items-center">
               {/* Toggle Alto Contraste */}
               <button
                 onClick={() => setAltoContraste(!altoContraste)}
@@ -553,7 +565,7 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                 title="Activar/Desactivar modo alto contraste"
               >
                 {altoContraste ? <Eye className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                {altoContraste ? 'Contraste Normal' : 'Alto Contraste'}
+                <span className="hidden sm:inline">{altoContraste ? 'Contraste Normal' : 'Alto Contraste'}</span>
               </button>
               
               {/* Controles de tamaño de texto */}
@@ -562,7 +574,7 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                   onClick={() => cambiarTamanoTexto('disminuir')}
                   disabled={tamanoTexto === 'pequeno'}
                   className={`
-                    px-3 py-2 rounded font-bold
+                    px-2 sm:px-3 py-2 rounded font-bold flex items-center
                     ${tamanoTexto === 'pequeno' 
                       ? 'opacity-50 cursor-not-allowed' 
                       : 'hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95'
@@ -572,22 +584,22 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                   `}
                   title="Disminuir tamaño de texto"
                 >
-                  <Type className="w-4 h-4" />
-                  <span className="text-xs">A-</span>
+                  <Type className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="text-xs ml-1">A-</span>
                 </button>
                 
-                <span className="px-2 text-sm font-medium">
+                <span className="px-2 text-xs sm:text-sm font-medium min-w-[70px] sm:min-w-[90px] text-center">
                   {tamanoTexto === 'pequeno' && 'Pequeño'}
                   {tamanoTexto === 'normal' && 'Normal'}
                   {tamanoTexto === 'grande' && 'Grande'}
-                  {tamanoTexto === 'extragrande' && 'Extra Grande'}
+                  {tamanoTexto === 'extragrande' && 'XL'}
                 </span>
                 
                 <button
                   onClick={() => cambiarTamanoTexto('aumentar')}
                   disabled={tamanoTexto === 'extragrande'}
                   className={`
-                    px-3 py-2 rounded font-bold
+                    px-2 sm:px-3 py-2 rounded font-bold flex items-center
                     ${tamanoTexto === 'extragrande' 
                       ? 'opacity-50 cursor-not-allowed' 
                       : 'hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95'
@@ -597,14 +609,14 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                   `}
                   title="Aumentar tamaño de texto"
                 >
-                  <Type className="w-5 h-5" />
-                  <span className="text-sm">A+</span>
+                  <Type className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-xs sm:text-sm ml-1">A+</span>
                 </button>
               </div>
             </div>
             
-            {/* Contadores mejorados con desglose por estado */}
-            <div className="flex flex-col sm:flex-row gap-2 items-end">
+            {/* Fila de contadores */}
+            <div className="flex flex-wrap gap-2 items-center justify-between">
               {/* Contador total */}
               <div className={`
                 px-5 py-3 rounded-lg 
@@ -665,28 +677,28 @@ const TransitosPendientesModal = ({ isOpen, onClose, darkMode }) => {
                   </div>
                 )}
               </div>
+              
+              {/* Toggle vista miniatura */}
+              <button
+                onClick={() => setVistaMiniatura(!vistaMiniatura)}
+                className={`
+                  px-4 py-2 rounded-lg font-medium
+                  ${altoContraste 
+                    ? 'bg-black text-white border-2 border-black' 
+                    : darkMode 
+                      ? 'bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-white' 
+                      : 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-black'
+                  }
+                  transition-colors
+                  touch-manipulation
+                  select-none
+                  active:scale-95
+                `}
+              >
+                {vistaMiniatura ? "Ver por estado" : "Vista miniatura"}
+              </button>
             </div>
           </div>
-          
-          {/* Toggle vista miniatura */}
-          <button
-            onClick={() => setVistaMiniatura(!vistaMiniatura)}
-            className={`
-              px-5 py-3 rounded-lg font-medium
-              ${altoContraste 
-                ? 'bg-black text-white border-2 border-black' 
-                : darkMode 
-                  ? 'bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-white' 
-                  : 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-black'
-              }
-              transition-colors
-              touch-manipulation
-              select-none
-              active:scale-95
-            `}
-          >
-            {vistaMiniatura ? "Ver por estado" : "Vista miniatura"}
-          </button>
         </div>
         
         {/* Contenido principal con scroll optimizado */}

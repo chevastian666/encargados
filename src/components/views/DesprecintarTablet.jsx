@@ -19,7 +19,7 @@ const DesprecintarTablet = ({ isOpen, onClose, darkMode }) => {
   const [selectedCamion, setSelectedCamion] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
 
   // Cargar camiones por desprecintar
   const { data: camionesData, loading, refetch } = useApiData(

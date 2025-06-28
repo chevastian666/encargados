@@ -127,7 +127,17 @@ export const ThemeProvider = ({ children }) => {
   // Estado del tema actual
   const [currentTheme, setCurrentTheme] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved || 'light';
+    return saved || 'dark'; // Cambiado a dark por defecto
+  });
+
+  // Estado para seguir el tema del sistema
+  const [followSystemTheme, setFollowSystemTheme] = useState(() => {
+    return localStorage.getItem('followSystemTheme') === 'true';
+  });
+
+  // Estado para transiciones suaves
+  const [enableTransitions, setEnableTransitions] = useState(() => {
+    return localStorage.getItem('enableTransitions') !== 'false';
   });
 
   // Estado del tema personalizado
@@ -151,6 +161,17 @@ export const ThemeProvider = ({ children }) => {
     
     // Aplicar el tema actual
     root.setAttribute('data-theme', currentTheme);
+    
+    // Manejar la clase 'dark' para Tailwind CSS
+    const isDarkTheme = currentTheme === 'dark' || 
+                       currentTheme === 'high-contrast-dark' ||
+                       (currentTheme === 'custom' && customTheme.type === 'dark');
+    
+    if (isDarkTheme) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
     
     // Si es un tema personalizado, aplicar las variables CSS
     if (currentTheme === 'custom') {
@@ -281,14 +302,71 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e) => {
-      if (localStorage.getItem('theme') === null) {
+      if (localStorage.getItem('theme') === null || localStorage.getItem('followSystemTheme') === 'true') {
         setCurrentTheme(e.matches ? 'dark' : 'light');
       }
     };
     
+    // Check initial preference
+    if (!localStorage.getItem('theme')) {
+      setCurrentTheme('dark'); // Siempre dark por defecto
+    }
+    
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
+
+  // Keyboard shortcuts for theme switching
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      // Ctrl/Cmd + Shift + D for toggle dark mode
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        toggleTheme();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentTheme]);
+
+  // Toggle follow system theme
+  const toggleFollowSystemTheme = () => {
+    const newValue = !followSystemTheme;
+    setFollowSystemTheme(newValue);
+    localStorage.setItem('followSystemTheme', newValue.toString());
+    
+    if (newValue) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      setCurrentTheme(mediaQuery.matches ? 'dark' : 'light');
+    }
+  };
+
+  // Toggle transitions
+  const toggleTransitions = () => {
+    const newValue = !enableTransitions;
+    setEnableTransitions(newValue);
+    localStorage.setItem('enableTransitions', newValue.toString());
+    document.documentElement.classList.toggle('no-transitions', !newValue);
+  };
+
+  // Get contrast ratio between two colors
+  const getContrastRatio = (color1, color2) => {
+    const getLuminance = (rgb) => {
+      const [r, g, b] = rgb.split(' ').map(Number);
+      const sRGB = [r, g, b].map(val => {
+        val = val / 255;
+        return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * sRGB[0] + 0.7152 * sRGB[1] + 0.0722 * sRGB[2];
+    };
+
+    const l1 = getLuminance(color1);
+    const l2 = getLuminance(color2);
+    const lmax = Math.max(l1, l2);
+    const lmin = Math.min(l1, l2);
+    return (lmax + 0.05) / (lmin + 0.05);
+  };
 
   const value = {
     // Estado
@@ -297,6 +375,8 @@ export const ThemeProvider = ({ children }) => {
     tempCustomTheme,
     isEditing,
     themes: THEMES,
+    followSystemTheme,
+    enableTransitions,
     
     // Acciones
     changeTheme,
@@ -308,6 +388,8 @@ export const ThemeProvider = ({ children }) => {
     resetCustomTheme,
     exportCustomTheme,
     importCustomTheme,
+    toggleFollowSystemTheme,
+    toggleTransitions,
     
     // Helpers
     isDark: currentTheme === 'dark' || 
@@ -315,7 +397,8 @@ export const ThemeProvider = ({ children }) => {
             (currentTheme === 'custom' && customTheme.type === 'dark'),
     isHighContrast: currentTheme === 'high-contrast' || 
                     currentTheme === 'high-contrast-dark',
-    isColorblind: THEMES[currentTheme]?.colorblind || false
+    isColorblind: THEMES[currentTheme]?.colorblind || false,
+    getContrastRatio
   };
 
   return (

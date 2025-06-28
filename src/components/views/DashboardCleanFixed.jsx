@@ -18,7 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 const DashboardCleanFixed = ({ onModuleClick }) => {
   const { isDark } = useTheme();
   const { stats, loading, refreshStats, updateStats } = useDashboardStats();
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
   const [activeModule, setActiveModule] = useState(null);
   const darkMode = isDark; // Compatibilidad con código existente
   
@@ -249,7 +249,7 @@ const DashboardCleanFixed = ({ onModuleClick }) => {
               <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''} text-gray-600 dark:text-gray-400 tablet-portrait:w-6 tablet-portrait:h-6 tablet-landscape:w-5 tablet-landscape:h-5`} />
             </button>
             
-            <ThemeSelector className="tablet-portrait:scale-110 tablet-landscape:scale-100" />
+            {/* <ThemeSelector className="tablet-portrait:scale-110 tablet-landscape:scale-100" /> */}
           </div>
         </div>
       </header>

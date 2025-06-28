@@ -14,7 +14,7 @@ import { ConnectionStatus } from '../common';
 const DashboardClean = ({ onModuleClick }) => {
   const [darkMode, setDarkMode, toggleDarkMode] = useDarkMode(true); // Usar el array completo del hook
   const { stats, loading, refreshStats } = useDashboardStats();
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
   const [activeModule, setActiveModule] = useState(null);
   
   // Asegurar que el dark mode esté aplicado al montar

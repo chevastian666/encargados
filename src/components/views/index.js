@@ -18,3 +18,7 @@ export { default as AlertasFixed } from './AlertasFixed';
 export { default as MapaTablet } from './MapaTablet';
 export { default as CamionesTablet } from './CamionesTablet';
 export { default as DesprecintarTablet } from './DesprecintarTablet';
+
+// Self-improvement dashboard
+export { default as SelfImprovementDashboard } from './SelfImprovementDashboard';
+export { default as DashboardWithSelfImprovement } from './DashboardWithSelfImprovement';

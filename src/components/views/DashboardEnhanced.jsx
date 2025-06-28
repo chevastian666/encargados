@@ -178,7 +178,7 @@ ActivityItem.displayName = 'ActivityItem';
  */
 const DashboardEnhanced = ({ onModuleClick }) => {
   const [darkMode, setDarkMode, toggleDarkMode] = useDarkMode();
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
   const [searchTerm, setSearchTerm] = useState('');
   const [activityFilter, setActivityFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -189,7 +189,7 @@ const DashboardEnhanced = ({ onModuleClick }) => {
     performance, 
     historicalData, 
     loading, 
-    error, 
+    error: statsError, 
     refreshStats,
     getMetricColor 
   } = useDashboardStats(10000); // Actualizar cada 10 segundos
@@ -316,22 +316,21 @@ const DashboardEnhanced = ({ onModuleClick }) => {
     switch (action) {
       case 'refresh':
         refreshStats();
-        showNotification('Datos actualizados', 'success');
+        success('Datos actualizados');
         break;
       case 'export':
-        showNotification('Generando reporte...', 'info');
+        info('Generando reporte...');
         // Implementar exportación
         break;
       case 'alerts':
         onModuleClick('alertas');
         break;
       case 'emergency':
-        showNotification('Protocolo de emergencia activado', 'warning');
+        warning('Protocolo de emergencia activado');
         break;
       case 'toggleProcess':
-        showNotification(
-          `${data.processId} ${data.active ? 'activado' : 'desactivado'}`,
-          'info'
+        info(
+          `${data.processId} ${data.active ? 'activado' : 'desactivado'}`
         );
         break;
       default:

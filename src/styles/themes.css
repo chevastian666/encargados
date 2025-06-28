@@ -109,23 +109,124 @@
   --overlay-heavy: 0 0 0 / 0.7;
 }
 
+/* Estilos específicos para el tema oscuro */
+[data-theme="dark"] {
+  /* Scrollbar personalizada */
+  scrollbar-color: rgb(var(--surface-tertiary)) rgb(var(--bg-primary));
+  
+  /* Selección de texto */
+  ::selection {
+    background-color: rgb(var(--color-primary) / 0.3);
+    color: rgb(var(--text-primary));
+  }
+  
+  /* Inputs y formularios */
+  input, textarea, select {
+    background-color: rgb(var(--surface-primary));
+    border-color: rgb(var(--border-primary));
+    color: rgb(var(--text-primary));
+  }
+  
+  input::placeholder, textarea::placeholder {
+    color: rgb(var(--text-tertiary));
+  }
+  
+  /* Enlaces */
+  a {
+    color: rgb(var(--color-primary));
+  }
+  
+  a:hover {
+    color: rgb(var(--color-primary) / 0.8);
+  }
+  
+  /* Código y pre */
+  code, pre {
+    background-color: rgb(var(--surface-secondary));
+    color: rgb(var(--text-primary));
+  }
+  
+  /* Tablas */
+  table {
+    border-color: rgb(var(--border-primary));
+  }
+  
+  th {
+    background-color: rgb(var(--surface-secondary));
+    color: rgb(var(--text-primary));
+  }
+  
+  td {
+    border-color: rgb(var(--border-primary));
+  }
+  
+  /* Imágenes - reducir brillo */
+  img {
+    opacity: 0.9;
+  }
+  
+  img:hover {
+    opacity: 1;
+  }
+}
+
 /* Tema Profesional */
 [data-theme="professional"] {
-  --color-primary: 30 64 175; /* blue-800 */
-  --color-secondary: 21 94 117; /* teal-800 */
-  --color-accent: 91 33 182; /* violet-800 */
-  --color-success: 21 128 61; /* green-800 */
-  --color-warning: 180 83 9; /* amber-800 */
-  --color-danger: 153 27 27; /* red-800 */
-  --color-info: 12 74 110; /* sky-900 */
+  /* Colores corporativos y sobrios */
+  --color-primary: 37 99 235; /* blue-600 - Azul corporativo */
+  --color-secondary: 71 85 105; /* slate-600 - Gris azulado */
+  --color-accent: 79 70 229; /* indigo-600 - Índigo elegante */
+  --color-success: 22 163 74; /* green-600 */
+  --color-warning: 217 119 6; /* amber-600 */
+  --color-danger: 220 38 38; /* red-600 */
+  --color-info: 2 132 199; /* sky-600 */
   
-  --bg-primary: 255 255 255;
+  /* Fondos neutros y limpios */
+  --bg-primary: 255 255 255; /* white */
   --bg-secondary: 248 250 252; /* slate-50 */
   --bg-tertiary: 241 245 249; /* slate-100 */
+  --bg-elevated: 255 255 255; /* white */
   
-  --text-primary: 15 23 42; /* slate-900 */
+  /* Superficies con matices sutiles */
+  --surface-primary: 255 255 255; /* white */
+  --surface-secondary: 248 250 252; /* slate-50 */
+  --surface-tertiary: 241 245 249; /* slate-100 */
+  
+  /* Textos con alto contraste profesional */
+  --text-primary: 15 23 42; /* slate-900 - Muy oscuro */
   --text-secondary: 51 65 85; /* slate-700 */
   --text-tertiary: 100 116 139; /* slate-500 */
+  --text-inverse: 255 255 255; /* white */
+  
+  /* Bordes definidos pero sutiles */
+  --border-primary: 226 232 240; /* slate-200 */
+  --border-secondary: 203 213 225; /* slate-300 */
+  --border-focus: 37 99 235; /* blue-600 */
+  
+  /* Sombras sutiles para profesionalismo */
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.07);
+  --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.08);
+  --shadow-xl: 0 20px 25px -5px rgb(15 23 42 / 0.1);
+  
+  /* Overlays */
+  --overlay-light: 15 23 42 / 0.05;
+  --overlay-medium: 15 23 42 / 0.2;
+  --overlay-heavy: 15 23 42 / 0.4;
+  
+  /* Estados profesionales */
+  --hover-opacity: 0.95;
+  --disabled-opacity: 0.6;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  
+  /* Radios más conservadores */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
+  --radius-full: 9999px;
 }
 
 /* Tema Alto Contraste */
@@ -338,9 +439,168 @@
   color: rgb(var(--color-info));
 }
 
+/* Utilidades adicionales para temas */
+.theme-transition {
+  transition: all var(--transition-normal) ease;
+}
+
+.theme-glow {
+  box-shadow: 0 0 20px rgb(var(--color-primary) / 0.3);
+}
+
+/* Gradientes temáticos */
+.gradient-primary {
+  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-secondary)));
+}
+
+.gradient-dark {
+  background: linear-gradient(135deg, rgb(var(--bg-primary)), rgb(var(--bg-tertiary)));
+}
+
+/* Efectos de vidrio (glassmorphism) */
+.glass-effect {
+  background: rgb(var(--surface-primary) / 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgb(var(--border-primary) / 0.5);
+}
+
+/* Modo de impresión */
+@media print {
+  * {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  a, a:visited {
+    text-decoration: underline;
+  }
+  
+  img {
+    max-width: 100% !important;
+  }
+}
+
 /* Transiciones suaves al cambiar temas */
 * {
   transition: background-color var(--transition-normal) ease,
               color var(--transition-normal) ease,
-              border-color var(--transition-normal) ease;
+              border-color var(--transition-normal) ease,
+              box-shadow var(--transition-normal) ease,
+              fill var(--transition-normal) ease,
+              stroke var(--transition-normal) ease;
+}
+
+/* Desactivar transiciones cuando se solicite */
+.no-transitions * {
+  transition: none !important;
+}
+
+/* Clase para modo oscuro automático basado en preferencia del sistema */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    /* Aplicar variables del tema oscuro por defecto */
+    --color-primary: 96 165 250;
+    --color-secondary: 52 211 153;
+    --color-accent: 167 139 250;
+    --color-success: 74 222 128;
+    --color-warning: 251 191 36;
+    --color-danger: 248 113 113;
+    --color-info: 56 189 248;
+    
+    --bg-primary: 17 24 39;
+    --bg-secondary: 31 41 55;
+    --bg-tertiary: 55 65 81;
+    --bg-elevated: 31 41 55;
+    
+    --surface-primary: 31 41 55;
+    --surface-secondary: 55 65 81;
+    --surface-tertiary: 75 85 99;
+    
+    --text-primary: 243 244 246;
+    --text-secondary: 209 213 219;
+    --text-tertiary: 156 163 175;
+    --text-inverse: 17 24 39;
+    
+    --border-primary: 55 65 81;
+    --border-secondary: 75 85 99;
+    --border-focus: 96 165 250;
+  }
+}
+
+/* Mejoras de accesibilidad para focus */
+*:focus-visible {
+  outline: var(--focus-ring-width) solid rgb(var(--border-focus));
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Estilos específicos para tema profesional */
+[data-theme="professional"] {
+  /* Botones con aspecto más corporativo */
+  .btn-primary {
+    background: linear-gradient(180deg, rgb(var(--color-primary)) 0%, rgb(var(--color-primary) / 0.9) 100%);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(180deg, rgb(var(--color-primary) / 0.95) 0%, rgb(var(--color-primary) / 0.85) 100%);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  
+  /* Cards con bordes más definidos */
+  .card, .modal-content {
+    border: 1px solid rgb(var(--border-primary));
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  }
+  
+  /* Headers con estilo ejecutivo */
+  .header, .navbar {
+    background: linear-gradient(90deg, rgb(var(--bg-primary)) 0%, rgb(var(--bg-secondary)) 100%);
+    border-bottom: 2px solid rgb(var(--border-primary));
+  }
+  
+  /* Tablas con aspecto corporativo */
+  table {
+    border: 1px solid rgb(var(--border-primary));
+  }
+  
+  thead {
+    background-color: rgb(var(--bg-tertiary));
+    font-weight: 600;
+  }
+  
+  /* Formularios más estructurados */
+  input, textarea, select {
+    border: 1.5px solid rgb(var(--border-primary));
+    background-color: rgb(var(--bg-primary));
+  }
+  
+  input:focus, textarea:focus, select:focus {
+    border-color: rgb(var(--color-primary));
+    box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.1);
+  }
+  
+  /* Métricas y estadísticas con estilo ejecutivo */
+  .stat-card {
+    background: linear-gradient(135deg, rgb(var(--surface-primary)) 0%, rgb(var(--surface-secondary)) 100%);
+    border: 1px solid rgb(var(--border-primary));
+  }
+  
+  /* Navegación con aspecto profesional */
+  .nav-item {
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+  }
+  
+  .nav-item:hover {
+    background-color: rgb(var(--bg-tertiary));
+  }
+  
+  /* Alertas más sobrias */
+  .alert {
+    border-left: 4px solid currentColor;
+    background-color: rgb(var(--bg-secondary));
+  }
 }

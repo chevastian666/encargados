@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* Import touch-optimized utilities */
 @import './styles/touch-utilities.css';
 
@@ -10,6 +6,13 @@
 
 /* Import theme system */
 @import './styles/themes.css';
+
+/* Import Galaxy Tab Active5 optimizations */
+@import './styles/galaxy-tab-active5.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body {
   @apply m-0 font-sans;
@@ -26,52 +29,41 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Estilos base del body */
+/* Estilos base del body usando variables CSS del tema */
 body {
-  background-color: #ffffff;
-  color: #000000;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: rgb(var(--bg-primary));
+  color: rgb(var(--text-primary));
+  transition: background-color var(--transition-normal) ease, color var(--transition-normal) ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Dark mode heredado del html */
-html.dark body {
-  background-color: #111827;
-  color: #f3f4f6;
-}
-
-/* Scrollbar personalizada para tablets */
-.scrollbar-dark::-webkit-scrollbar,
-.scrollbar-light::-webkit-scrollbar {
+/* Scrollbar personalizada usando variables del tema */
+::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
-.scrollbar-dark::-webkit-scrollbar-track {
-  background: #1f2937;
-  border-radius: 6px;
+::-webkit-scrollbar-track {
+  background: rgb(var(--bg-secondary));
+  border-radius: var(--radius-md);
 }
 
-.scrollbar-light::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 6px;
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--surface-tertiary));
+  border-radius: var(--radius-md);
+  border: 2px solid rgb(var(--bg-secondary));
 }
 
-.scrollbar-dark::-webkit-scrollbar-thumb {
-  background: #4b5563;
-  border-radius: 6px;
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--border-secondary));
 }
 
-.scrollbar-light::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 6px;
-}
-
-.scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
-}
-
-.scrollbar-light::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--surface-tertiary)) rgb(var(--bg-secondary));
 }
 
 /* Animaciones para modales */
@@ -98,5 +90,54 @@ html.dark body {
   
   button:active {
     transform: scale(0.98);
+  }
+}
+
+/* Focus visible para accesibilidad */
+:focus-visible {
+  outline: var(--focus-ring-width) solid rgb(var(--border-focus));
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Remover outline para clicks del mouse */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Selección de texto */
+::selection {
+  background-color: rgb(var(--color-primary) / 0.2);
+  color: rgb(var(--text-primary));
+}
+
+/* Placeholders */
+::placeholder {
+  color: rgb(var(--text-tertiary));
+  opacity: 1;
+}
+
+/* Desactivar user-select en elementos UI */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Media query para respetar preferencias de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

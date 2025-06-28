@@ -16,7 +16,7 @@ export const useRealtimeUpdates = (options = {}) => {
     showNotifications = true
   } = options;
   
-  const { showNotification } = useNotification();
+  const { success, error, warning, info } = useNotification();
   const subscriptionsRef = useRef([]);
   const isConnectedRef = useRef(false);
 
@@ -41,12 +41,11 @@ export const useRealtimeUpdates = (options = {}) => {
     }
     
     if (showNotifications && data.showNotification) {
-      showNotification(
-        `Tránsito ${data.matricula} actualizado`,
-        'info'
+      info(
+        `Tránsito ${data.matricula} actualizado`
       );
     }
-  }, [onTransitUpdate, showNotifications, showNotification]);
+  }, [onTransitUpdate, showNotifications, info]);
 
   // Manejar actualización de stock
   const handleStockUpdate = useCallback((data) => {
@@ -55,12 +54,11 @@ export const useRealtimeUpdates = (options = {}) => {
     }
     
     if (showNotifications && data.critical) {
-      showNotification(
-        `Stock crítico: ${data.itemType} en ${data.location}`,
-        'warning'
+      warning(
+        `Stock crítico: ${data.itemType} en ${data.location}`
       );
     }
-  }, [onStockUpdate, showNotifications, showNotification]);
+  }, [onStockUpdate, showNotifications, warning]);
 
   // Manejar nueva alerta
   const handleAlertUpdate = useCallback((data) => {
@@ -110,9 +108,9 @@ export const useRealtimeUpdates = (options = {}) => {
     // Suscribirse a eventos de conexión
     const connectionUnsubscriber = wsService.subscribe('connection', (data) => {
       if (data.status === 'connected') {
-        showNotification('Conectado al servidor en tiempo real', 'success');
+        success('Conectado al servidor en tiempo real');
       } else if (data.status === 'disconnected') {
-        showNotification('Conexión perdida. Reconectando...', 'warning');
+        warning('Conexión perdida. Reconectando...');
       }
     });
 

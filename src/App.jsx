@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ConnectionProvider } from './contexts/ConnectionContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { 
   Dashboard, 
   DashboardFixed,
@@ -26,9 +26,10 @@ import CMOBanner from './components/common/CMOBanner';
 import CONFIG from './constants/config';
 
 /**
- * Componente principal de la aplicación
+ * Componente interno de la aplicación que usa el tema
  */
-const App = () => {
+const AppContent = () => {
+  const { isDark } = useTheme();
   // Estado para controlar qué modales están abiertos
   const [modals, setModals] = useState({
     transitos: false,
@@ -71,56 +72,65 @@ const App = () => {
   };
 
   return (
-    <ThemeProvider>
-      <ConnectionProvider>
-        <NotificationProvider>
+    <ConnectionProvider>
+      <NotificationProvider>
         {/* Banner de notificaciones destacadas del CMO */}
-        <CMOBanner darkMode={true} onMessageClick={(message) => {
+        <CMOBanner darkMode={isDark} onMessageClick={(message) => {
           // Abrir el módulo de comunicación del CMO cuando se hace clic en un mensaje
           console.log('CMO message clicked:', message);
         }} />
         
         {/* Vista principal del Dashboard */}
-        <DashboardCleanFixed onModuleClick={handleModuleClick} />
+        <DashboardCleanFixed onModuleClick={handleModuleClick} darkMode={isDark} />
         
         {/* Modales para cada módulo - Versiones optimizadas para tablet */}
         <TransitosPendientesTablet 
           isOpen={modals.transitos} 
-          onClose={() => handleCloseModal('transitos')} 
-          darkMode={true} 
+          onClose={() => handleCloseModal('transitos')}
+          darkMode={isDark}
         />
         
         <DesprecintarTablet 
           isOpen={modals.desprecintar} 
-          onClose={() => handleCloseModal('desprecintar')} 
-          darkMode={true} 
+          onClose={() => handleCloseModal('desprecintar')}
+          darkMode={isDark}
         />
         
         <StockTablet 
           isOpen={modals.stock} 
-          onClose={() => handleCloseModal('stock')} 
-          darkMode={true} 
+          onClose={() => handleCloseModal('stock')}
+          darkMode={isDark}
         />
         
         <AlertasFixed 
           isOpen={modals.alertas} 
-          onClose={() => handleCloseModal('alertas')} 
-          darkMode={true} 
+          onClose={() => handleCloseModal('alertas')}
+          darkMode={isDark}
         />
         
         <MapaTablet 
           isOpen={modals.mapa} 
-          onClose={() => handleCloseModal('mapa')} 
-          darkMode={true} 
+          onClose={() => handleCloseModal('mapa')}
+          darkMode={isDark}
         />
         
         <CamionesTablet 
           isOpen={modals.camiones} 
-          onClose={() => handleCloseModal('camiones')} 
-          darkMode={true} 
+          onClose={() => handleCloseModal('camiones')}
+          darkMode={isDark}
         />
         </NotificationProvider>
       </ConnectionProvider>
+  );
+};
+
+/**
+ * Componente principal que envuelve toda la aplicación con los providers
+ */
+const App = () => {
+  return (
+    <ThemeProvider>
+      <AppContent />
     </ThemeProvider>
   );
 };
